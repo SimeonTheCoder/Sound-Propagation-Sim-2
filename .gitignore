@@ -1,3 +1,5 @@
 .vscode/
 /bin
 /obj
+output.csv
+imgui.ini
