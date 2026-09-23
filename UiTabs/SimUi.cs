@@ -89,12 +89,13 @@ public class SimUi : IUi
 
         if (ImGui.Button("Export"))
         {
-            string[] lines = new string[SampleRate * SimRef.RecordingDuration];
+            WavWriter.Write(SimRef.waveformL, SimRef.waveformR);
+            // string[] lines = new string[SampleRate * SimRef.RecordingDuration];
 
-            for (int i = 0; i < SimRef.waveformL.Length; i ++)
-                lines[i] = $"{SimRef.waveformL[i]},{SimRef.waveformR[i]}";
+            // for (int i = 0; i < SimRef.waveformL.Length; i ++)
+            //     lines[i] = $"{SimRef.waveformL[i]},{SimRef.waveformR[i]}";
 
-            File.WriteAllLines("output.csv", lines);
+            // File.WriteAllLines("output.csv", lines);
         }
 
         ImGui.Checkbox("Use dB for Visualization", ref useDb);
