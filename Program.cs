@@ -14,6 +14,8 @@ public class Program
         IUi[] tabs = [new SingleParticleUi(), new SimUi()];
         foreach (var tab in tabs) tab.Init();
 
+        Zoom = 1000f;
+
         int selectedTab = 0;
 
         Raylib.SetConfigFlags(ConfigFlags.ResizableWindow);

@@ -10,8 +10,10 @@ public class SingleParticleUi : IUi
 {
     private bool spawnOtherWorlds = false;
     private bool drawTrails = false;
-    private bool drawGuide = true;
-    private bool drawLabels = true;
+    private bool drawGuide = false;
+    private bool drawLabels = false;
+
+    private bool drawVelocities = false;
  
     private float timeScale = 0f;
  
@@ -24,10 +26,38 @@ public class SingleParticleUi : IUi
     private List<Vector2> boundariesX = new();
     private List<Vector2> boundariesY = new();
 
+    private void SpawnParticles()
+    {
+        positions = new();
+        velocities = new();
+
+        boundariesX = new();
+        boundariesY = new();
+
+        for (int i = 0; i < 10_000; i ++)
+        {
+            float vx = MathF.Cos(i / 10000f * 2 * MathF.PI + 0.4f);
+            float vy = MathF.Sin(i / 10000f * 2 * MathF.PI + 0.4f);
+
+            positions.Add(new(SourcePos.X, SourcePos.Y));
+            velocities.Add(new(vx, vy));
+
+            boundariesX.Add(new(0, SimRef.RoomDimensions.X));
+            boundariesY.Add(new(0, SimRef.RoomDimensions.Y));
+        }
+    }
+
     public void Init()
     {
-        Zoom = 100f;
+        Zoom = 1000f;
+        timeScale = 0f;
         Vector2 initialVelocity = Vector2.Normalize(new(1.0f, 0.3f));
+
+        positions = new();
+        velocities = new();
+
+        boundariesX = new();
+        boundariesY = new();
 
         positions = [new(SourcePos.X, SourcePos.Y)];
         velocities = [new(initialVelocity.X, initialVelocity.Y)];
@@ -117,7 +147,7 @@ public class SingleParticleUi : IUi
         for (int i = 0; i < positions.Count; i ++)
         {
             RenderingUtils.Rect(positions[i], new(4, 4), Color.Blue);
-            RenderingUtils.Line(positions[i], positions[i] + velocities[i] * 0.1f, Color.Blue);
+            if(drawVelocities) RenderingUtils.Line(positions[i], positions[i] + velocities[i] * 0.1f, Color.Blue);
         }
 
         if (drawGuide) RenderingUtils.Line(SourcePos - initialVelocity * 10, SourcePos + initialVelocity * 10, Color.Pink);
@@ -128,8 +158,14 @@ public class SingleParticleUi : IUi
         if (!ImGui.BeginTabItem("Particle Reflection Visualization")) return false;
 
         ImGui.Checkbox("Spawn other worlds", ref spawnOtherWorlds);
+        if (ImGui.Button("Spawn all")) SpawnParticles();
+
+        ImGui.Separator();
+
         ImGui.SliderFloat("Zoom", ref Zoom, 25, 2000);
+        
         ImGui.Checkbox("Draw trails", ref drawTrails);
+        ImGui.Checkbox("Draw velocity vectors", ref drawVelocities);
         ImGui.Checkbox("Draw guide", ref drawGuide);
         ImGui.Checkbox("Labels", ref drawLabels);
 
@@ -154,6 +190,8 @@ public class SingleParticleUi : IUi
 
         if (ImGui.Button("Reset"))
         {
+            timeScale = 0f;
+
             positions = [new(SourcePos.X, SourcePos.Y)];
             velocities = [new(initialVelocity.X, initialVelocity.Y)];
             boundariesX = [new(0, SimRef.RoomDimensions.X)];
