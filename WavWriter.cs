@@ -6,6 +6,8 @@ public class WavWriter
 {
     public static void Write(float[] samplesL, float[] samplesR)
     {
+        float max = MathF.Max(samplesL.Max(), samplesR.Max()); 
+
         List<byte> bytes =
         [
             .. ConvertString("RIFF"),
@@ -25,8 +27,8 @@ public class WavWriter
 
         for (int i = 0; i < samplesL.Length; i ++)
         {
-            bytes.AddRange(BitConverter.GetBytes(samplesL[i]));
-            bytes.AddRange(BitConverter.GetBytes(samplesR[i]));
+            bytes.AddRange(BitConverter.GetBytes(samplesL[i] / max));
+            bytes.AddRange(BitConverter.GetBytes(samplesR[i] / max));
         }
 
         File.WriteAllBytes("output.wav", bytes.ToArray());

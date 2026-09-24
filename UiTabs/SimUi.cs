@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using ImGuiNET;
 using Raylib_cs;
 using static Shared;
@@ -10,6 +11,15 @@ public class SimUi : IUi
     private int dbMin = -60;
     private int dbMax = 0;
 
+    private Music ir;
+    private Music songDry;
+    private Music songWet;
+
+    private float volumeDry = 0.5f;
+    private float volumeWet = 0.5f;
+
+    private bool playingProcessed = false;
+
     public void Init()
     {
         Zoom = 1f;
@@ -17,7 +27,20 @@ public class SimUi : IUi
 
     public void Update()
     {
-        
+        Raylib.SetMusicVolume(ir, volumeDry);
+        Raylib.SetMusicVolume(songDry, playingProcessed ? 0f : volumeDry);
+        Raylib.SetMusicVolume(songWet, playingProcessed ? volumeWet : 0f);
+
+        if (Raylib.IsMusicStreamPlaying(ir))
+        {
+            Raylib.UpdateMusicStream(ir);
+        }
+
+        if (Raylib.IsMusicStreamPlaying(songDry))
+        {
+            Raylib.UpdateMusicStream(songDry);
+            Raylib.UpdateMusicStream(songWet);
+        }
     }
 
     public void Draw()
@@ -89,7 +112,29 @@ public class SimUi : IUi
 
         if (ImGui.Button("Export"))
         {
+            Raylib.UnloadMusicStream(ir);
+            Raylib.UnloadMusicStream(songDry);
+            Raylib.UnloadMusicStream(songWet);
+
             WavWriter.Write(SimRef.waveformL, SimRef.waveformR);
+
+            ir = Raylib.LoadMusicStream("output.wav");
+            songDry = Raylib.LoadMusicStream("song.mp3");
+
+            Process process = new()
+            {
+                StartInfo =
+                {
+                    FileName = "cmd.exe",
+                    Arguments = "/C ffmpeg -y -i song.mp3 -i output.wav -filter_complex \"[1]loudnorm[a];[0][a]afir\" processed.wav"
+                }
+            };
+
+            process.Start();
+            process.WaitForExit();
+
+            songWet = Raylib.LoadMusicStream("processed.wav");
+
             // string[] lines = new string[SampleRate * SimRef.RecordingDuration];
 
             // for (int i = 0; i < SimRef.waveformL.Length; i ++)
@@ -105,6 +150,44 @@ public class SimUi : IUi
             ImGui.SliderInt("Floor", ref dbMin, -100, 0);
             ImGui.SliderInt("Ceiling", ref dbMax, -100, 0);
         }
+
+        ImGui.Separator();
+
+        if (ImGui.Button(Raylib.IsMusicStreamPlaying(ir) ? "Stop" : "Play IR"))
+        {
+            if (!Raylib.IsMusicStreamPlaying(ir))
+            {
+                Raylib.PlayMusicStream(ir);
+            }
+            else
+            {
+                Raylib.StopMusicStream(ir);
+            }
+        }
+
+        if (ImGui.Button(Raylib.IsMusicStreamPlaying(songDry) ? "Stop Playback" : "Play song"))
+        {
+            if (Raylib.IsMusicStreamPlaying(songDry))
+            {
+                Raylib.StopMusicStream(songDry);
+                Raylib.StopMusicStream(songWet);
+            }
+            else
+            {
+                Raylib.StopMusicStream(ir);
+
+                Raylib.PlayMusicStream(songDry);
+                Raylib.PlayMusicStream(songWet);
+            }
+        }
+
+        if (ImGui.Button($"{(playingProcessed ? "IR off" : "IR on")}"))
+        {
+            playingProcessed = !playingProcessed;
+        }
+
+        ImGui.SliderFloat("Volume Dry", ref volumeDry, 0f, 1f);
+        ImGui.SliderFloat("Volume Wet", ref volumeWet, 0f, 1f);
 
         ImGui.EndTabItem();
         return true;

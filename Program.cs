@@ -21,6 +21,7 @@ public class Program
         Raylib.SetConfigFlags(ConfigFlags.ResizableWindow);
 
         Raylib.InitWindow(1920, 1080, "Test");
+        Raylib.InitAudioDevice();
         Raylib.SetTargetFPS(120);
 
         rlImGui.Setup(true);
@@ -70,6 +71,7 @@ public class Program
             Raylib.EndDrawing();
         }
 
+        Raylib.CloseAudioDevice();
         Raylib.CloseWindow();
     }
 }
