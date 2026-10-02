@@ -12,9 +12,6 @@ public class Simulation
     public int RecordingDuration = 1;
     public float Scale = 1f;
 
-    public bool SmoothingEnabled = false;
-    public int KernelSize = 2;
-    public float SmoothingPower = 2;
     public float ReflectionCoefficient = 0.7f;
 
     public Vector2 RoomDimensions = new(1f, 1f);
@@ -46,22 +43,15 @@ public class Simulation
                 int index = (int) (distance * Scale / SpeedOfSound * SampleRate);
                 if (index >= SampleRate * RecordingDuration) continue;
 
-                if (SmoothingEnabled)
-                {
-                    for (int k = 0; k < KernelSize; k ++)
-                    {
-                        float factor = MathF.Pow((KernelSize - MathF.Abs(k - 0)) / KernelSize, SmoothingPower);
-                        if (index + k < 0 || index + k >= SampleRate * RecordingDuration) continue;
-                        waveformL[index + k] += amplitude * factor * l;
-                        waveformR[index + k] += amplitude * factor * r;
-                    }
-                }
-                else
-                {
-                    waveformL[index] += amplitude * l;
-                    waveformR[index] += amplitude * r;
-                }
+                waveformL[index] += amplitude * l;
+                waveformR[index] += amplitude * r;
             }
+        }
+
+        if (Smoothing.SmoothingEnabled)
+        {
+            waveformL = Smoothing.Smooth(waveformL);
+            waveformR = Smoothing.Smooth(waveformR);
         }
     }
 }

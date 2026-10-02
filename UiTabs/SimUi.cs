@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using ImGuiNET;
 using Raylib_cs;
+using Simulator;
 using static Shared;
 
 namespace UiTabs;
@@ -95,12 +96,13 @@ public class SimUi : IUi
 
         ImGui.InputInt("Reflections Count", ref ReflectionsCount);
 
-        ImGui.Checkbox("Use Smoothing", ref SimRef.SmoothingEnabled);
+        ImGui.Checkbox("Use Smoothing", ref Smoothing.SmoothingEnabled);
 
-        if (SimRef.SmoothingEnabled)
+        if (Smoothing.SmoothingEnabled)
         {
-            ImGui.InputInt("Kernel size", ref SimRef.KernelSize);
-            ImGui.SliderFloat("Smoothing Power", ref SimRef.SmoothingPower, 0f, 3f);
+            ImGui.InputInt("Kernel size", ref Smoothing.KernelSize);
+            ImGui.SliderFloat("Smoothing Power", ref Smoothing.SmoothingPower, 0f, 3f);
+            ImGui.Checkbox("Bidirectional smoothing", ref Smoothing.Bidirectional);
         }
 
         if (ImGui.Button("Calculate"))
