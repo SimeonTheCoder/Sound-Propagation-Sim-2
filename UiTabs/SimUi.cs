@@ -24,6 +24,7 @@ public class SimUi : IUi
     public void Init()
     {
         Zoom = 1f;
+        Pan = new(0f, 0f);
     }
 
     public void Update()
@@ -64,22 +65,22 @@ public class SimUi : IUi
 
         Raylib.BeginBlendMode(BlendMode.Additive);
 
-        for (int i = 0; i < SimRef.waveformL.Length; i ++)
+        for (int i = 0; i < SimRef.WaveformL.Length; i ++)
         {
-            int hl = (int) (SimRef.waveformL[i] * Height);
-            int hr = (int) (SimRef.waveformR[i] * Height);
+            int hl = (int) (SimRef.WaveformL[i] * Height);
+            int hr = (int) (SimRef.WaveformR[i] * Height);
 
             if (useDb)
             {
-                float dbL = 20 * MathF.Log10(SimRef.waveformL[i]);
+                float dbL = 20 * MathF.Log10(SimRef.WaveformL[i]);
                 hl = (int) ((dbL - dbMin) / (dbMax - dbMin) * Height);
 
-                float dbR = 20 * MathF.Log10(SimRef.waveformR[i]);
+                float dbR = 20 * MathF.Log10(SimRef.WaveformR[i]);
                 hr = (int) ((dbR - dbMin) / (dbMax - dbMin) * Height);
             }
             
-            Raylib.DrawRectangle((int) ((i + 0f) / SampleRate / SimRef.RecordingDuration * Width * Zoom), Height - hl, (int) Zoom, hl, new Color(1f, 0f, 0f));
-            Raylib.DrawRectangle((int) ((i + 0f) / SampleRate / SimRef.RecordingDuration * Width * Zoom), Height - hr, (int) Zoom, hr, new Color(0f, 1f, 0f));
+            Raylib.DrawRectangle((int) ((i + 0f) / SampleRate / RecordingDuration * Width * Zoom) + (int) (Pan.X * Zoom), Height - hl, (int) Zoom, hl, new Color(1f, 0f, 0f));
+            Raylib.DrawRectangle((int) ((i + 0f) / SampleRate / RecordingDuration * Width * Zoom) + (int) (Pan.X * Zoom), Height - hr, (int) Zoom, hr, new Color(0f, 1f, 0f));
         }
 
         Raylib.EndBlendMode();
@@ -89,10 +90,10 @@ public class SimUi : IUi
     {
         if (!ImGui.BeginTabItem("IR Simulation")) return false;
         
-        ImGui.SliderFloat("Scale", ref SimRef.Scale, 0f, 100f, "%f", ImGuiSliderFlags.Logarithmic);
-        ImGui.SliderFloat("Reflection Coefficient", ref SimRef.ReflectionCoefficient, 0f, 1f, "%f");
+        ImGui.SliderFloat("Scale", ref Scale, 0f, 100f, "%f", ImGuiSliderFlags.Logarithmic);
+        ImGui.SliderFloat("Reflection Coefficient", ref ReflectionCoefficient, 0f, 1f, "%f");
 
-        ImGui.InputInt("Recording Duration", ref SimRef.RecordingDuration);
+        ImGui.InputInt("Recording Duration", ref RecordingDuration);
 
         ImGui.InputInt("Reflections Count", ref ReflectionsCount);
 
@@ -118,7 +119,7 @@ public class SimUi : IUi
             Raylib.UnloadMusicStream(songDry);
             Raylib.UnloadMusicStream(songWet);
 
-            WavWriter.Write(SimRef.waveformL, SimRef.waveformR);
+            WavWriter.Write(SimRef.WaveformL, SimRef.WaveformR);
 
             ir = Raylib.LoadMusicStream("output.wav");
             songDry = Raylib.LoadMusicStream("song.mp3");

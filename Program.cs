@@ -2,7 +2,9 @@
 using ImGuiNET;
 using Raylib_cs;
 using rlImGui_cs;
+using Simulator;
 using UiTabs;
+using Utils;
 using static Shared;
 
 public class Program
@@ -11,10 +13,14 @@ public class Program
     {
         InitShared();
 
+        ISim[] simulations = [new Simulation()];
+        SimRef = simulations[0];
+
         IUi[] tabs = [new SingleParticleUi(), new SimUi()];
         foreach (var tab in tabs) tab.Init();
 
         Zoom = 1000f;
+        Pan = new(0f, 0f);
 
         int selectedTab = 0;
 
@@ -26,11 +32,38 @@ public class Program
 
         rlImGui.Setup(true);
 
+        Vector2 mouseDragStart = new(0f, 0f);
+        bool mouseDragging = false;
+
+        bool firstOpen = true;
+
         while(!Raylib.WindowShouldClose())
         {
             foreach (var tab in tabs) tab.Update();
 
             Zoom *= Raylib.GetMouseWheelMoveV().Y * 0.1f + 1;
+
+            Vector2 mousePos = Raylib.GetMousePosition();
+
+            if (Raylib.IsMouseButtonDown(MouseButton.Middle))
+            {
+                if (!mouseDragging)
+                {
+                    mouseDragStart = RenderingUtils.ClipToXY(((int) mousePos.X, (int) mousePos.Y));
+                    mouseDragging = true;
+                }
+                else
+                {
+                    Vector2 curr = RenderingUtils.ClipToXY(((int) mousePos.X, (int) mousePos.Y));
+                    Vector2 offset = curr - mouseDragStart;
+
+                    Pan += offset;
+                }
+            }
+            else
+            {
+                mouseDragging = false;
+            }
 
             Raylib.BeginDrawing();
 
@@ -42,14 +75,49 @@ public class Program
 
             rlImGui.Begin();
 
-            ImGui.Begin("Controls");
+            if (firstOpen)
+            {
+                ImGui.SetNextWindowPos(new(Raylib.GetScreenWidth() * 22 / 30, Raylib.GetScreenHeight() / 20));
+                ImGui.SetNextWindowSize(new(Raylib.GetScreenWidth() / 4, Raylib.GetScreenHeight() / 12));
+            }
 
-            ImGui.InputFloat2("Room Dimensions", ref SimRef.RoomDimensions);
+            ImGui.Begin("Controls");
 
             ImGui.InputFloat2("Source Position", ref SourcePos);
             ImGui.InputFloat2("Listener Position", ref ListenerPos);
 
-            ImGui.Separator();
+            ImGui.End();
+
+            if (firstOpen)
+            {
+                ImGui.SetNextWindowPos(new(Raylib.GetScreenWidth() * 22 / 30, Raylib.GetScreenHeight() / 6.7f));
+                ImGui.SetNextWindowSize(new(Raylib.GetScreenWidth() / 4, Raylib.GetScreenHeight() / 12));
+            }
+
+            ImGui.Begin("Simulation Options");
+
+            if (ImGui.BeginCombo("simulator", "Select Simulator"))
+            {
+                foreach (ISim sim in simulations)
+                {
+                    if (ImGui.Selectable(sim.GetType().Name))
+                        SimRef = sim;
+                }
+
+                ImGui.EndCombo();
+            }
+
+            SimRef.DrawControls();
+
+            ImGui.End();
+
+            if (firstOpen)
+            {
+                ImGui.SetNextWindowPos(new(Raylib.GetScreenWidth() * 22 / 30, Raylib.GetScreenHeight() * 2 / 8));
+                ImGui.SetNextWindowSize(new(Raylib.GetScreenWidth() / 4, Raylib.GetScreenHeight() / 2));
+            }
+
+            ImGui.Begin("Visualisation");
 
             ImGui.BeginTabBar("tab_bar");
 
@@ -69,6 +137,8 @@ public class Program
 
             rlImGui.End();
             Raylib.EndDrawing();
+
+            firstOpen = false;
         }
 
         Raylib.CloseAudioDevice();

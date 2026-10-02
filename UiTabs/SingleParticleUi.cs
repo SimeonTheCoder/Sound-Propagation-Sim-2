@@ -42,8 +42,8 @@ public class SingleParticleUi : IUi
             positions.Add(new(SourcePos.X, SourcePos.Y));
             velocities.Add(new(vx, vy));
 
-            boundariesX.Add(new(0, SimRef.RoomDimensions.X));
-            boundariesY.Add(new(0, SimRef.RoomDimensions.Y));
+            boundariesX.Add(new(0, ((Vector2) SimRef.Room).X));
+            boundariesY.Add(new(0, ((Vector2) SimRef.Room).Y));
         }
     }
 
@@ -51,6 +51,8 @@ public class SingleParticleUi : IUi
     {
         Zoom = 1000f;
         timeScale = 0f;
+        Pan = new(0f, 0f);
+
         Vector2 initialVelocity = Vector2.Normalize(new(1.0f, 0.3f));
 
         positions = new();
@@ -61,8 +63,8 @@ public class SingleParticleUi : IUi
 
         positions = [new(SourcePos.X, SourcePos.Y)];
         velocities = [new(initialVelocity.X, initialVelocity.Y)];
-        boundariesX = [new(0, SimRef.RoomDimensions.X)];
-        boundariesY = [new(0, SimRef.RoomDimensions.Y)];
+        boundariesX = [new(0, ((Vector2) SimRef.Room).X)];
+        boundariesY = [new(0, ((Vector2) SimRef.Room).Y)];
     }
 
     public void Update()
@@ -83,7 +85,7 @@ public class SingleParticleUi : IUi
                     positions.Add(new(positions[i].X, positions[i].Y));
                     velocities.Add(new(velocities[i].X, velocities[i].Y));
 
-                    float dir = ((positions[i].X < boundariesX[i].X) ? -1 : 1) * SimRef.RoomDimensions.X;
+                    float dir = ((positions[i].X < boundariesX[i].X) ? -1 : 1) * ((Vector2) SimRef.Room).X;
 
                     boundariesX.Add(new(boundariesX[i].X + dir, boundariesX[i].Y + dir));
                     boundariesY.Add(new(boundariesY[i].X, boundariesY[i].Y));
@@ -100,7 +102,7 @@ public class SingleParticleUi : IUi
                     positions.Add(new(positions[i].X, positions[i].Y));
                     velocities.Add(new(velocities[i].X, velocities[i].Y));
 
-                    float dir = ((positions[i].Y < boundariesY[i].X) ? -1 : 1) * Shared.SimRef.RoomDimensions.Y;
+                    float dir = ((positions[i].Y < boundariesY[i].X) ? -1 : 1) * ((Vector2) SimRef.Room).Y;
 
                     boundariesX.Add(new(boundariesX[i].X, boundariesX[i].Y));
                     boundariesY.Add(new(boundariesY[i].X + dir, boundariesY[i].Y + dir));
@@ -123,7 +125,7 @@ public class SingleParticleUi : IUi
                 if(drawGuide)
                 {
                     RenderingUtils.Rect(
-                        MathUtils.GetReflectedCoords(ListenerPos, j, i, SimRef.RoomDimensions),
+                        MathUtils.GetReflectedCoords(ListenerPos, j, i, (Vector2) SimRef.Room),
                         new(4, 4),
                         Color.Red
                     );
@@ -137,10 +139,10 @@ public class SingleParticleUi : IUi
 
                 Color c = (i == 0 && j == 0) ? Color.Yellow : Color.Gray;
 
-                RenderingUtils.Line(new(j, i), new(j + SimRef.RoomDimensions.X, i), c);
-                RenderingUtils.Line(new(j, i), new(j, i + SimRef.RoomDimensions.Y), c);
-                RenderingUtils.Line(new(j, i + SimRef.RoomDimensions.Y), new(j + SimRef.RoomDimensions.X, i + SimRef.RoomDimensions.Y), c);
-                RenderingUtils.Line(new(j + SimRef.RoomDimensions.X, i), new(j + SimRef.RoomDimensions.X, i + SimRef.RoomDimensions.Y), c);
+                RenderingUtils.Line(new(j, i), new(j + ((Vector2) SimRef.Room).X, i), c);
+                RenderingUtils.Line(new(j, i), new(j, i + ((Vector2) SimRef.Room).Y), c);
+                RenderingUtils.Line(new(j, i + ((Vector2) SimRef.Room).Y), new(j + ((Vector2) SimRef.Room).X, i + ((Vector2) SimRef.Room).Y), c);
+                RenderingUtils.Line(new(j + ((Vector2) SimRef.Room).X, i), new(j + ((Vector2) SimRef.Room).X, i + ((Vector2) SimRef.Room).Y), c);
             }
         }
 
@@ -180,7 +182,7 @@ public class SingleParticleUi : IUi
 
         if (ImGui.Button("Aim"))
         {
-            Vector2 targetPos = MathUtils.GetReflectedCoords(SourcePos, aimX, aimY, SimRef.RoomDimensions);
+            Vector2 targetPos = MathUtils.GetReflectedCoords(SourcePos, aimX, aimY, (Vector2) SimRef.Room);
             
             velocities[0] = Vector2.Normalize(targetPos - positions[0]);
             initialVelocity = new(velocities[0].X, velocities[0].Y);
@@ -194,8 +196,8 @@ public class SingleParticleUi : IUi
 
             positions = [new(SourcePos.X, SourcePos.Y)];
             velocities = [new(initialVelocity.X, initialVelocity.Y)];
-            boundariesX = [new(0, SimRef.RoomDimensions.X)];
-            boundariesY = [new(0, SimRef.RoomDimensions.Y)];
+            boundariesX = [new(0, ((Vector2) SimRef.Room).X)];
+            boundariesY = [new(0, ((Vector2) SimRef.Room).Y)];
         }
 
         ImGui.EndTabItem();

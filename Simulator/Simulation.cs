@@ -1,25 +1,21 @@
 using System.Numerics;
+using ImGuiNET;
 using Utils;
 using static Shared;
 
 namespace Simulator;
 
-public class Simulation
+public class Simulation : ISim
 {
-    public float[] waveformL = new float[SampleRate];
-    public float[] waveformR = new float[SampleRate];
+    public float[] WaveformL {get; set;} = new float[SampleRate];
+    public float[] WaveformR {get; set;} = new float[SampleRate];
 
-    public int RecordingDuration = 1;
-    public float Scale = 1f;
-
-    public float ReflectionCoefficient = 0.7f;
-
-    public Vector2 RoomDimensions = new(1f, 1f);
+    public object Room {get; set;} = new Vector2(1f, 1f);
 
     public void Calculate()
     {
-        waveformL = new float[SampleRate * RecordingDuration];
-        waveformR = new float[SampleRate * RecordingDuration];
+        WaveformL = new float[SampleRate * RecordingDuration];
+        WaveformR = new float[SampleRate * RecordingDuration];
 
         for (int i = -ReflectionsCount; i < ReflectionsCount; i ++)
         {
@@ -27,7 +23,7 @@ public class Simulation
             {
                 int currReflectionCount = Math.Abs(i) + Math.Abs(j);
 
-                Vector2 targetPos = MathUtils.GetReflectedCoords(ListenerPos, j, i, RoomDimensions);
+                Vector2 targetPos = MathUtils.GetReflectedCoords(ListenerPos, j, i, (Vector2) Room);
                 
                 float distance = Vector2.Distance(targetPos, SourcePos) * Scale;
 
@@ -43,15 +39,23 @@ public class Simulation
                 int index = (int) (distance * Scale / SpeedOfSound * SampleRate);
                 if (index >= SampleRate * RecordingDuration) continue;
 
-                waveformL[index] += amplitude * l;
-                waveformR[index] += amplitude * r;
+                WaveformL[index] += amplitude * l;
+                WaveformR[index] += amplitude * r;
             }
         }
 
         if (Smoothing.SmoothingEnabled)
         {
-            waveformL = Smoothing.Smooth(waveformL);
-            waveformR = Smoothing.Smooth(waveformR);
+            WaveformL = Smoothing.Smooth(WaveformL);
+            WaveformR = Smoothing.Smooth(WaveformR);
         }
+    }
+
+    private Vector2 RoomDimensions = new(1f, 1f);
+
+    public void DrawControls()
+    {
+        ImGui.InputFloat2("Room Dimensions", ref RoomDimensions);
+        this.Room = RoomDimensions;
     }
 }
