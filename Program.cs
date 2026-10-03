@@ -13,7 +13,7 @@ public class Program
     {
         InitShared();
 
-        ISim[] simulations = [new Simulation()];
+        ISim[] simulations = [new RectSimulation(), new ConvexSimulation()];
         SimRef = simulations[0];
 
         IUi[] tabs = [new SingleParticleUi(), new ConvexRoomUi(), new RecordUi()];

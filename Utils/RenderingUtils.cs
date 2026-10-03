@@ -38,7 +38,7 @@ public class RenderingUtils
     public static void Rect(Vector2 center, Vector2 size, Color color)
     {
         (int x, int y) = TransformCoords(center);
-        
+
         Raylib.DrawRectangle(
             x - (int)(size.X / 2 * Zoom),
             y - (int)(size.Y / 2 * Zoom),
@@ -60,7 +60,7 @@ public class RenderingUtils
         {
             Rect(
                 MathUtils.RotateVec(graph.nodes[i], Theta, DoRotation),
-                new(0.1f, 0.1f),
+                new(0.02f, 0.02f),
                 Color.White
             );
 

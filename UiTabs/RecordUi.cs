@@ -97,6 +97,13 @@ public class RecordUi : IUi
 
         ImGui.InputInt("Reflections Count", ref ReflectionsCount);
 
+        if (ImGui.Button("Calculate"))
+        {
+            SimRef.Calculate();
+        }
+
+        ImGui.Separator();
+
         ImGui.Checkbox("Use Smoothing", ref Smoothing.SmoothingEnabled);
 
         if (Smoothing.SmoothingEnabled)
@@ -104,14 +111,15 @@ public class RecordUi : IUi
             ImGui.InputInt("Kernel size", ref Smoothing.KernelSize);
             ImGui.SliderFloat("Smoothing Power", ref Smoothing.SmoothingPower, 0f, 3f);
             ImGui.Checkbox("Bidirectional smoothing", ref Smoothing.Bidirectional);
+
+            if (ImGui.Button("Smooth"))
+            {
+                SimRef.WaveformL = Smoothing.Smooth(SimRef.WaveformL);
+                SimRef.WaveformR = Smoothing.Smooth(SimRef.WaveformR);
+            }
         }
 
-        if (ImGui.Button("Calculate"))
-        {
-            SimRef.Calculate();
-        }
-
-        ImGui.SameLine();
+        ImGui.Separator();
 
         if (ImGui.Button("Export"))
         {

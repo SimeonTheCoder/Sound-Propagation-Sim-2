@@ -10,6 +10,7 @@ using static Raylib_cs.Raylib;
 using static Utils.RenderingUtils;
 using static Utils.MathUtils;
 using ImGuiNET;
+using Simulator;
 
 public class ConvexRoomUi : IUi
 {
@@ -24,8 +25,9 @@ public class ConvexRoomUi : IUi
 
     public void Draw()
     {
+        if (!(SimRef is ConvexSimulation)) return;
         Vector2 mousePos = GetMouseWorldPos();
-        Rect(mousePos, new(0.1f, 0.1f), Color.Yellow);
+        // Rect(mousePos, new(0.1f, 0.1f), Color.Yellow);
 
         ClearBackground(Color.Black);
 
@@ -53,17 +55,18 @@ public class ConvexRoomUi : IUi
                     }
                 }
             }
-
-            Console.WriteLine($"Valid: {(validCount / (float) graph.data.Count * 100):f2}%");
         }
 
         DrawGraph(graph, selectedPath.Length > 0 ? selectedPath.edges[selectedPath.Length - 1] : -1);
 
         if (selectedPath.Length > 0)
         {
+            Graph curr = graph;
+
             for (int i = 0; i < selectedPath.Length; i++)
             {
-                DrawGraph(graph, selectedPath.edges[i]);
+                curr = Graph.MirrorGraphAlongAxis(curr, selectedPath.edges[i]);
+                DrawGraph(curr, selectedPath.edges[i]);
 
                 Rect(
                     RotateVec(
@@ -71,7 +74,7 @@ public class ConvexRoomUi : IUi
                         Theta,
                         DoRotation
                     ),
-                    new(0.2f, 0.2f),
+                    new(0.05f, 0.05f),
                     Color.Red
                 );
             }
@@ -83,10 +86,11 @@ public class ConvexRoomUi : IUi
         foreach (Vector2 node in graph.nodes)
         {
             if (Vector2.Distance(node, mousePos) < 0.1f)
-                Rect(node, new(0.2f, 0.2f), Color.Green);
+                Rect(node, new(0.05f, 0.05f), Color.Green);
         }
 
-        Rect(ListenerPos, new(0.2f, 0.2f), Color.Red);
+        Rect(ListenerPos, new(0.05f, 0.05f), Color.Red);
+        Rect(new(0f, 0f), new(0.05f, 0.05f), Color.Blue);
 
         Line(
             RotateVec(new(0, -100), -Theta, !DoRotation),
@@ -98,6 +102,14 @@ public class ConvexRoomUi : IUi
     public bool DrawUi()
     {
         if (!ImGui.BeginTabItem("Convex Room")) return false;
+
+        if (!(SimRef is ConvexSimulation))
+        {
+            ImGui.TextUnformatted("Unsupported simulation format!");
+
+            ImGui.EndTabItem();
+            return false;   
+        }
 
         ImGui.Checkbox("Snap Mouse", ref doSnapping);
         ImGui.SliderFloat("Theta", ref Theta, 0f, 360f);
@@ -113,6 +125,8 @@ public class ConvexRoomUi : IUi
                 selectedPath.edges.Add(i);
         }
 
+        SimRef.Room = graph;
+
         ImGui.EndMultiSelect();
 
         ImGui.EndTabItem();
@@ -123,8 +137,8 @@ public class ConvexRoomUi : IUi
     {
         Pan = new(0f, 0f);
 
-        graph = new();
-        selectedPath = new();
+        if (graph == null) graph = new();
+        if (selectedPath == null) selectedPath = new();
     }
 
     private Vector2 GetMouseWorldPos()
@@ -137,11 +151,12 @@ public class ConvexRoomUi : IUi
 
     public void Update()
     {
+        if (!(SimRef is ConvexSimulation)) return;
+
         if (!placementMode && graph.nodes.Count > 0)
             selectedPath = Graph.GeneratePath(graph, Count, Theta);
 
         Vector2 mousePos = GetMouseWorldPos();
-        Rect(mousePos, new(0.1f, 0.1f), Color.Yellow);
 
         if (IsKeyPressed(KeyboardKey.P))
             placementMode = !placementMode;

@@ -5,7 +5,7 @@ using static Shared;
 
 namespace Simulator;
 
-public class Simulation : ISim
+public class RectSimulation : ISim
 {
     public float[] WaveformL {get; set;} = new float[SampleRate];
     public float[] WaveformR {get; set;} = new float[SampleRate];
@@ -42,12 +42,6 @@ public class Simulation : ISim
                 WaveformL[index] += amplitude * l;
                 WaveformR[index] += amplitude * r;
             }
-        }
-
-        if (Smoothing.SmoothingEnabled)
-        {
-            WaveformL = Smoothing.Smooth(WaveformL);
-            WaveformR = Smoothing.Smooth(WaveformR);
         }
     }
 

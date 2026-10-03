@@ -1,6 +1,7 @@
 using System.Numerics;
 using ImGuiNET;
 using Raylib_cs;
+using Simulator;
 using Utils;
 using static Shared;
 
@@ -25,6 +26,19 @@ public class SingleParticleUi : IUi
     private List<Vector2> velocities = new();
     private List<Vector2> boundariesX = new();
     private List<Vector2> boundariesY = new();
+
+    private bool VerifySim()
+    {
+        if (SimRef is ConvexSimulation)
+        {
+            ImGui.TextUnformatted("Unsupported simulation format!");
+
+            ImGui.EndTabItem();
+            return false;
+        }
+
+        return true;
+    }
 
     private void SpawnParticles()
     {
@@ -69,6 +83,8 @@ public class SingleParticleUi : IUi
 
     public void Update()
     {
+        if (!(SimRef is RectSimulation)) return;
+
         float dt = Raylib.GetFrameTime() * timeScale;
 
         int posCount = positions.Count;
@@ -116,6 +132,7 @@ public class SingleParticleUi : IUi
 
     public void Draw()
     {
+        if (!(SimRef is RectSimulation)) return;
         if(!drawTrails) Raylib.ClearBackground(Color.Black);
 
         for (int i = -10; i < 10; i ++)
@@ -158,6 +175,14 @@ public class SingleParticleUi : IUi
     public bool DrawUi()
     {
         if (!ImGui.BeginTabItem("Particles Visualisation")) return false;
+
+        if (!(SimRef is RectSimulation))
+        {
+            ImGui.TextUnformatted("Unsupported simulation format!");
+
+            ImGui.EndTabItem();
+            return false;
+        }
 
         ImGui.Checkbox("Spawn other worlds", ref spawnOtherWorlds);
         if (ImGui.Button("Spawn all")) SpawnParticles();
