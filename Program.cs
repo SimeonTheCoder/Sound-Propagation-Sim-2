@@ -16,7 +16,7 @@ public class Program
         ISim[] simulations = [new Simulation()];
         SimRef = simulations[0];
 
-        IUi[] tabs = [new SingleParticleUi(), new SimUi()];
+        IUi[] tabs = [new SingleParticleUi(), new ConvexRoomUi(), new RecordUi()];
         foreach (var tab in tabs) tab.Init();
 
         Zoom = 1000f;

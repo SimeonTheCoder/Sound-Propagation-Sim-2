@@ -1,4 +1,5 @@
 using System.Numerics;
+using Graphs;
 using Raylib_cs;
 
 using static Shared;
@@ -7,6 +8,9 @@ namespace Utils;
 
 public class RenderingUtils
 {
+    public static float Theta = 0;
+    public static bool DoRotation = false;
+
     public static (int x, int y) TransformCoords(Vector2 coords)
     {
         return (
@@ -34,6 +38,48 @@ public class RenderingUtils
     public static void Rect(Vector2 center, Vector2 size, Color color)
     {
         (int x, int y) = TransformCoords(center);
-        Raylib.DrawRectangle(x - (int) size.X / 2, y - (int) size.Y / 2, (int) size.X, (int) size.Y, color);
+        
+        Raylib.DrawRectangle(
+            x - (int)(size.X / 2 * Zoom),
+            y - (int)(size.Y / 2 * Zoom),
+            (int)(size.X * Zoom),
+            (int)(size.Y * Zoom),
+            color
+        );
+    }
+
+    public static void DrawGraph(Graph graph, int selectedEdge)
+    {
+        DrawLinks(graph, selectedEdge);
+        DrawNodes(graph);
+    }
+
+    public static void DrawNodes(Graph graph)
+    {
+        for (int i = 0; i < graph.nodes.Count; i++)
+        {
+            Rect(
+                MathUtils.RotateVec(graph.nodes[i], Theta, DoRotation),
+                new(0.1f, 0.1f),
+                Color.White
+            );
+
+            (int x, int y) coords = TransformCoords(
+                MathUtils.RotateVec(graph.nodes[i], Theta, DoRotation)
+            );
+            Raylib.DrawText($"{i}", coords.x - 10, coords.y - 20, 10, Color.Yellow);
+        }
+    }
+
+    public static void DrawLinks(Graph graph, int selectedEdge)
+    {
+        for (int i = 0; i < graph.edges.Count; i++)
+        {
+            Line(
+                MathUtils.RotateVec(graph.nodes[graph.edges[i].from], Theta, DoRotation),
+                MathUtils.RotateVec(graph.nodes[graph.edges[i].to], Theta, DoRotation),
+                i == selectedEdge ? Color.Yellow : Color.White
+            );
+        }
     }
 }

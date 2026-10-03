@@ -148,7 +148,7 @@ public class SingleParticleUi : IUi
 
         for (int i = 0; i < positions.Count; i ++)
         {
-            RenderingUtils.Rect(positions[i], new(4, 4), Color.Blue);
+            RenderingUtils.Rect(positions[i], new(0.005f, 0.005f), Color.Blue);
             if(drawVelocities) RenderingUtils.Line(positions[i], positions[i] + velocities[i] * 0.1f, Color.Blue);
         }
 
@@ -157,7 +157,7 @@ public class SingleParticleUi : IUi
 
     public bool DrawUi()
     {
-        if (!ImGui.BeginTabItem("Particle Reflection Visualization")) return false;
+        if (!ImGui.BeginTabItem("Particles Visualisation")) return false;
 
         ImGui.Checkbox("Spawn other worlds", ref spawnOtherWorlds);
         if (ImGui.Button("Spawn all")) SpawnParticles();

@@ -6,7 +6,7 @@ using static Shared;
 
 namespace UiTabs;
 
-public class SimUi : IUi
+public class RecordUi : IUi
 {
     private bool useDb = true;
     private int dbMin = -60;
