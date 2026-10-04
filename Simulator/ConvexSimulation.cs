@@ -18,11 +18,11 @@ public class ConvexSimulation : ISim
 
         Graph graph = (Graph) Room;
 
-        graph.GenerateData(Steps, Count);
-
-        for (int i = 0; i < graph.data.Count; i++)
+        for (int k = 0; k < Count; k++)
         {
-            for (int k = 0; k < Count; k++)
+            graph.GenerateData(Steps, k);
+
+            for (int i = 0; i < graph.data.Count; i++)
             {
                 bool valid = graph.IsValidPath(i, ListenerPos, k);
 

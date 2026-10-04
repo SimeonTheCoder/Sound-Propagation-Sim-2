@@ -14,8 +14,10 @@ public class GraphPath
         }
     }
 
-    public bool Equals(GraphPath b)
+    public bool Equals(GraphPath b, int steps=-1)
     {
-        return this.edges.SequenceEqual(b.edges);
+        return steps == -1 ?
+            this.edges.SequenceEqual(b.edges) :
+            this.edges.Take(steps).SequenceEqual(b.edges.Take(steps));
     }
 }

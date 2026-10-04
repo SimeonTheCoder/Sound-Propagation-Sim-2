@@ -181,6 +181,19 @@ public class Graph
         if (angle < 0f) angle = angle + 360f;
 
         bool valid = angle >= data[pathIndex].start && angle <= data[pathIndex].end;
-        return valid;
+        if (valid) return true;
+
+        int truePathIndex = -1;
+
+        for(int i = 0; i < data.Count; i ++)
+        {
+            if (angle < data[i].start || angle > data[i].end) continue;
+            truePathIndex = i;
+            break;
+        }
+
+        if (truePathIndex == -1) return false;
+
+        return data[pathIndex].Equals(data[truePathIndex], length);
     }
 }
