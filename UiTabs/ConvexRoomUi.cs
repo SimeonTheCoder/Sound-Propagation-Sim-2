@@ -4,6 +4,7 @@ using System.Numerics;
 using Graphs;
 using ImGuiNET;
 using Raylib_cs;
+using Utils;
 using static Raylib_cs.Raylib;
 using static Shared;
 using static Utils.MathUtils;
@@ -13,16 +14,86 @@ public class ConvexRoomUi : IUi
 {
     bool placementMode = false;
     bool doSnapping = false;
+    bool recursiveMode = false;
 
     private Graph graph = null!;
     private GraphPath selectedPath = null!;
 
-    int Count = 16;
+    int Count = 4;
     int Steps = 720;
 
-    public void CalculateRecursive(float angleStart, float angleEnd)
+    public void CalculateRecursive(
+        Graph graph,
+        Vector2 mic,
+        Vector2 origin,
+        float angleStart,
+        float angleEnd,
+        int depth,
+        bool crossSegment
+    )
     {
-        
+        // System.Console.WriteLine(depth);
+
+        if (depth > Count)
+            return;
+
+        float angleToMic = GetAngle(mic - origin);
+
+        if (!crossSegment)
+        {
+            if (angleToMic >= angleStart && angleToMic <= angleEnd)
+                Line(new(0f, 0f), mic, Color.Red);
+        }
+        else
+        {
+            if (angleToMic >= angleStart || angleToMic <= angleEnd)
+                Line(new(0f, 0f), mic, Color.Red);
+        }
+
+        for (int i = 0; i < graph.edges.Count; i++)
+        {
+            Vector2 from = graph.nodes[graph.edges[i].from];
+            Vector2 to = graph.nodes[graph.edges[i].to];
+
+            float start = GetAngle(from - origin);
+            float end = GetAngle(to - origin);
+
+            if (start < end)
+            {
+                CalculateRecursive(
+                    Graph.MirrorGraphAlongAxis(graph, i),
+                    Graph.MirrorNodeAlongAxis(graph, mic, i),
+                    Graph.MirrorNodeAlongAxis(graph, origin, i),
+                    start,
+                    end,
+                    depth + 1,
+                    false
+                );
+            }
+            else
+            {
+                CalculateRecursive(
+                    Graph.MirrorGraphAlongAxis(graph, i),
+                    Graph.MirrorNodeAlongAxis(graph, mic, i),
+                    Graph.MirrorNodeAlongAxis(graph, origin, i),
+                    start,
+                    end,
+                    depth + 1,
+                    true
+                );
+            }
+
+            // System.Console.WriteLine($"i: {i}, {start:f1} - {end:f1}");
+
+            // bool collision =
+            //     (start <= theta && end >= theta && start < end)
+            //     || (end < start && (end >= theta || theta >= start));
+
+            // if (collision)
+            //     return i;
+        }
+
+        // return -1;
     }
 
     public void Draw()
@@ -36,24 +107,33 @@ public class ConvexRoomUi : IUi
 
         if (!placementMode && graph.nodes.Count > 0)
         {
-            // graph.GenerateData(Steps, Count);
-            // int validCount = 0;
+            if (recursiveMode)
+                CalculateRecursive(graph, ListenerPos, new(0f, 0f), 0f, 360f, 0, false);
+            else
+            {
+                graph.GenerateData(Steps, Count);
+                int validCount = 0;
 
-            // for (int i = 0; i < graph.data.Count; i++)
-            // {
-            //     for (int k = 0; k < Count; k++)
-            //     {
-            //         bool valid = graph.IsValidPath(i, ListenerPos, k);
+                for (int i = 0; i < graph.data.Count; i++)
+                {
+                    for (int k = 0; k < Count; k++)
+                    {
+                        bool valid = graph.IsValidPath(i, ListenerPos, k);
 
-            //         Vector2 newMic = graph.TransformNodeWithGraph(ListenerPos, graph.data[i], k);
+                        Vector2 newMic = graph.TransformNodeWithGraph(
+                            ListenerPos,
+                            graph.data[i],
+                            k
+                        );
 
-            //         if (valid)
-            //         {
-            //             validCount++;
-            //             Line(newMic, new(0, 0), Color.Red);
-            //         }
-            //     }
-            // }
+                        if (valid)
+                        {
+                            validCount++;
+                            Line(newMic, new(0, 0), Color.Red);
+                        }
+                    }
+                }
+            }
         }
 
         DrawGraph(
@@ -61,38 +141,38 @@ public class ConvexRoomUi : IUi
             selectedPath.Length > 0 ? selectedPath.edges[selectedPath.Length - 1] : -1
         );
 
-        for (int i = 0; i < graph.edges.Count; i++)
-        {
-            Vector2 from = graph.nodes[graph.edges[i].from];
-            Vector2 to = graph.nodes[graph.edges[i].to];
+        // for (int i = 0; i < graph.edges.Count; i++)
+        // {
+        //     Vector2 from = graph.nodes[graph.edges[i].from];
+        //     Vector2 to = graph.nodes[graph.edges[i].to];
 
-            float start = GetAngle(from);
-            float end = GetAngle(to);
+        //     float start = GetAngle(from);
+        //     float end = GetAngle(to);
 
-            bool collision =
-                (start <= Theta && end >= Theta && start < end)
-                || (end < start && (end >= Theta || Theta >= start));
+        //     bool collision =
+        //         (start <= Theta && end >= Theta && start < end)
+        //         || (end < start && (end >= Theta || Theta >= start));
 
-            (int x, int y) coords = TransformCoords(from * 0.5f + to * 0.5f);
-            DrawText(
-                $"{start:f1} to {end:f1}",
-                coords.x,
-                coords.y + 20,
-                20,
-                collision ? Color.Red : Color.Yellow
-            );
+        //     (int x, int y) coords = TransformCoords(from * 0.5f + to * 0.5f);
+        //     DrawText(
+        //         $"{start:f1} to {end:f1}",
+        //         coords.x,
+        //         coords.y + 20,
+        //         20,
+        //         collision ? Color.Red : Color.Yellow
+        //     );
 
-            Line(
-                new(0f, 0f),
-                RotateVec(from, Theta, DoRotation),
-                collision ? Color.Red : Color.Yellow
-            );
-            Line(
-                new(0f, 0f),
-                RotateVec(to, Theta, DoRotation),
-                collision ? Color.Red : Color.Yellow
-            );
-        }
+        //     Line(
+        //         new(0f, 0f),
+        //         RotateVec(from, Theta, DoRotation),
+        //         collision ? Color.Red : Color.Yellow
+        //     );
+        //     Line(
+        //         new(0f, 0f),
+        //         RotateVec(to, Theta, DoRotation),
+        //         collision ? Color.Red : Color.Yellow
+        //     );
+        // }
 
         if (selectedPath.Length > 0)
         {
@@ -158,6 +238,7 @@ public class ConvexRoomUi : IUi
         ImGui.SliderInt("Step Size", ref Steps, 0, 360_0);
         ImGui.SliderInt("Count", ref Count, 0, 100);
         ImGui.Checkbox("Point up", ref DoRotation);
+        ImGui.Checkbox("Recursive mode", ref recursiveMode);
 
         ImGui.BeginMultiSelect(ImGuiMultiSelectFlags.SingleSelect);
 
