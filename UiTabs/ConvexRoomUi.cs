@@ -14,12 +14,12 @@ public class ConvexRoomUi : IUi
 {
     bool placementMode = false;
     bool doSnapping = false;
-    bool recursiveMode = false;
+    bool recursiveMode = true;
 
     private Graph graph = null!;
     private GraphPath selectedPath = null!;
 
-    int Count = 4;
+    int Count = 2;
     int Steps = 720;
 
     public void CalculateRecursive(
@@ -32,17 +32,17 @@ public class ConvexRoomUi : IUi
         bool crossSegment
     )
     {
-        // System.Console.WriteLine(depth);
-
         if (depth > Count)
             return;
 
-        float angleToMic = GetAngle(mic - origin);
+        float angleToMic = GetAngle(mic);
 
         if (!crossSegment)
         {
             if (angleToMic >= angleStart && angleToMic <= angleEnd)
+            {
                 Line(new(0f, 0f), mic, Color.Red);
+            }
         }
         else
         {
@@ -58,42 +58,99 @@ public class ConvexRoomUi : IUi
             float start = GetAngle(from - origin);
             float end = GetAngle(to - origin);
 
-            if (start < end)
+            if (!crossSegment)
             {
-                CalculateRecursive(
-                    Graph.MirrorGraphAlongAxis(graph, i),
-                    Graph.MirrorNodeAlongAxis(graph, mic, i),
-                    Graph.MirrorNodeAlongAxis(graph, origin, i),
-                    start,
-                    end,
-                    depth + 1,
-                    false
-                );
+                if (start < end && ((start < angleStart && end < angleStart) || (start > angleStart && start > angleEnd))) continue;
+                else if (angleStart > end && angleEnd < start) continue;
+            }
+
+            if (!crossSegment)
+            {
+                if (start < end && MathF.Min(angleEnd, end) > MathF.Max(angleStart, start))
+                {
+                    CalculateRecursive(
+                        Graph.MirrorGraphAlongAxis(graph, i),
+                        Graph.MirrorNodeAlongAxis(graph, mic, i),
+                        Graph.MirrorNodeAlongAxis(graph, origin, i),
+                        MathF.Max(angleStart, start),
+                        MathF.Min(angleEnd, end),
+                        depth + 1,
+                        false
+                    );
+                }
+                else
+                {
+                    if (start < angleEnd)
+                    {
+                        CalculateRecursive(
+                            Graph.MirrorGraphAlongAxis(graph, i),
+                            Graph.MirrorNodeAlongAxis(graph, mic, i),
+                            Graph.MirrorNodeAlongAxis(graph, origin, i),
+                            start,
+                            angleEnd,
+                            depth + 1,
+                            false
+                        );
+                    }
+
+                    if (angleStart < end)
+                    {
+                        CalculateRecursive(
+                            Graph.MirrorGraphAlongAxis(graph, i),
+                            Graph.MirrorNodeAlongAxis(graph, mic, i),
+                            Graph.MirrorNodeAlongAxis(graph, origin, i),
+                            angleStart,
+                            end,
+                            depth + 1,
+                            false
+                        );
+                    }
+                }
             }
             else
             {
-                CalculateRecursive(
-                    Graph.MirrorGraphAlongAxis(graph, i),
-                    Graph.MirrorNodeAlongAxis(graph, mic, i),
-                    Graph.MirrorNodeAlongAxis(graph, origin, i),
-                    start,
-                    end,
-                    depth + 1,
-                    true
-                );
+                if(start < end)
+                {
+                    if (start < angleEnd)
+                    {
+                        CalculateRecursive(
+                            Graph.MirrorGraphAlongAxis(graph, i),
+                            Graph.MirrorNodeAlongAxis(graph, mic, i),
+                            Graph.MirrorNodeAlongAxis(graph, origin, i),
+                            start,
+                            angleEnd,
+                            depth + 1,
+                            true
+                        );
+                    }
+
+                    if (angleStart < end)
+                    {
+                        CalculateRecursive(
+                            Graph.MirrorGraphAlongAxis(graph, i),
+                            Graph.MirrorNodeAlongAxis(graph, mic, i),
+                            Graph.MirrorNodeAlongAxis(graph, origin, i),
+                            angleStart,
+                            end,
+                            depth + 1,
+                            true
+                        );
+                    }
+                }
+                else
+                {
+                    CalculateRecursive(
+                        Graph.MirrorGraphAlongAxis(graph, i),
+                        Graph.MirrorNodeAlongAxis(graph, mic, i),
+                        Graph.MirrorNodeAlongAxis(graph, origin, i),
+                        MathF.Max(start, angleStart),
+                        MathF.Min(end, angleEnd),
+                        depth + 1,
+                        true
+                    );
+                }
             }
-
-            // System.Console.WriteLine($"i: {i}, {start:f1} - {end:f1}");
-
-            // bool collision =
-            //     (start <= theta && end >= theta && start < end)
-            //     || (end < start && (end >= theta || theta >= start));
-
-            // if (collision)
-            //     return i;
         }
-
-        // return -1;
     }
 
     public void Draw()
@@ -108,7 +165,9 @@ public class ConvexRoomUi : IUi
         if (!placementMode && graph.nodes.Count > 0)
         {
             if (recursiveMode)
+            {
                 CalculateRecursive(graph, ListenerPos, new(0f, 0f), 0f, 360f, 0, false);
+            }
             else
             {
                 graph.GenerateData(Steps, Count);

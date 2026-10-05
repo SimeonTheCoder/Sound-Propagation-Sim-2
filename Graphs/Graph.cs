@@ -99,11 +99,11 @@ public class Graph
         float xo = edgeStart.X;
         float yo = edgeStart.Y;
 
-        return new()
+        return new Graph()
         {
             nodes = graph.nodes.Select(n => MathUtils.DoAxisFlip(n, theta, xo, yo)).ToList(),
-            edges = graph.edges,
-        };
+            edges = graph.edges.Select(p => p).ToList(),
+        }.FixOrientation();
     }
 
     public static GraphPath GeneratePath(Graph graph, int count, float theta)
@@ -216,8 +216,34 @@ public class Graph
         return data[pathIndex].Equals(data[truePathIndex], length);
     }
 
-    public void FixOrientation()
+    public Graph FixOrientation()
     {
-        for (int i = 0; i < edges.Count; i++) { }
+        int totalPositive = 0;
+
+        for (int i = 0; i < edges.Count; i++)
+        {
+            float start = MathUtils.GetAngle(nodes[edges[i].from]);
+            float end = MathUtils.GetAngle(nodes[edges[i].to]);
+
+            // System.Console.WriteLine(start < end);
+
+            totalPositive += (start < end) ? 1 : 0;
+        }
+
+        if (totalPositive <= 1)
+        {
+            // System.Console.WriteLine("FIXED ORIENTATION!!!");
+            // System.Console.WriteLine(totalPositive);
+
+            for (int i = 0; i < edges.Count; i ++)
+            {
+                int from = edges[i].from;
+                int to = edges[i].to;
+
+                edges[i] = (to, from);
+            }
+        }
+        
+        return this;
     }
 }
