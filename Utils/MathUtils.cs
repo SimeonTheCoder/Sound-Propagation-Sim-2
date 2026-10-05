@@ -28,6 +28,11 @@ public class MathUtils
         );
     }
 
+    public static float GetAngle(Vector2 vec)
+    {
+        return (-MathF.Atan2(vec.X, vec.Y) * 180f / MathF.PI + 90 + 360) % 360;
+    }
+
     public static Vector2 DoAxisFlip(Vector2 vec, float theta, float xo, float yo)
     {
         float thetaRad = theta / 180f * MathF.PI;

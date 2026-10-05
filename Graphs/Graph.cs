@@ -55,15 +55,12 @@ public class Graph
         Vector2 edgeStart = graph.nodes[graph.edges[selectedEdge].from];
         Vector2 edgeEnd = graph.nodes[graph.edges[selectedEdge].to];
 
-        float dx = edgeEnd.X - edgeStart.X;
-        float dy = edgeEnd.Y - edgeStart.Y;
-
-        float theta = MathF.Atan2(dy, dx);
+        float theta = MathUtils.GetAngle(edgeEnd - edgeStart);
 
         float xo = edgeStart.X;
         float yo = edgeStart.Y;
 
-        return MathUtils.DoAxisFlip(vec, theta * 180 / MathF.PI, xo, yo);
+        return MathUtils.DoAxisFlip(vec, theta, xo, yo);
     }
 
     public static Graph MirrorGraphAlongAxis(Graph graph, int selectedEdge)
@@ -74,19 +71,14 @@ public class Graph
         Vector2 edgeStart = graph.nodes[graph.edges[selectedEdge].from];
         Vector2 edgeEnd = graph.nodes[graph.edges[selectedEdge].to];
 
-        float dx = edgeEnd.X - edgeStart.X;
-        float dy = edgeEnd.Y - edgeStart.Y;
-
-        float theta = MathF.Atan2(dy, dx);
+        float theta = MathUtils.GetAngle(edgeEnd - edgeStart);
 
         float xo = edgeStart.X;
         float yo = edgeStart.Y;
 
         return new()
         {
-            nodes = graph
-                .nodes.Select(n => MathUtils.DoAxisFlip(n, theta * 180 / MathF.PI, xo, yo))
-                .ToList(),
+            nodes = graph.nodes.Select(n => MathUtils.DoAxisFlip(n, theta, xo, yo)).ToList(),
             edges = graph.edges,
         };
     }
@@ -112,7 +104,7 @@ public class Graph
         {
             edges = edges,
             start = theta,
-            end = theta
+            end = theta,
         };
     }
 
@@ -125,21 +117,23 @@ public class Graph
 
         for (int i = 0; i < anglesCount; i++)
         {
-            float theta = 360f / anglesCount * i + 90;
+            float theta = 360f / anglesCount * i + 0;
             if (theta > 360f)
                 theta -= 360f;
 
-            GraphPath path = GeneratePath(this, reflectionsCount, theta);
+            GraphPath path = GeneratePath(this, reflectionsCount, 90f - theta);
             GraphPath currPath = path;
 
             if (lastPath != null && !currPath.Equals(lastPath))
             {
-                data.Add(new()
-                {
-                    edges = currPath.edges,
-                    start = start,
-                    end = (360f / anglesCount * (i - 1) + 90f) % 360f
-                });
+                data.Add(
+                    new()
+                    {
+                        edges = currPath.edges,
+                        start = start,
+                        end = (360f / anglesCount * (i - 1) + 0f) % 360f,
+                    }
+                );
 
                 start = theta;
             }
@@ -148,11 +142,14 @@ public class Graph
 
             if (i == anglesCount - 1)
             {
-                data.Add(new(){
-                    edges = currPath.edges,
-                    start = start,
-                    end = 90f
-                });
+                data.Add(
+                    new()
+                    {
+                        edges = currPath.edges,
+                        start = start,
+                        end = 0f,
+                    }
+                );
             }
         }
     }
@@ -173,27 +170,31 @@ public class Graph
 
     public bool IsValidPath(int pathIndex, Vector2 pos, int length)
     {
-        Vector2 newMic = TransformNodeWithGraph(
-            pos, data[pathIndex], length
-        );
-
-        float angle = MathF.Atan2(newMic.X, newMic.Y) / MathF.PI * 180f;
-        if (angle < 0f) angle = angle + 360f;
+        Vector2 newMic = TransformNodeWithGraph(pos, data[pathIndex], length);
+        float angle = MathUtils.GetAngle(new(newMic.X, newMic.Y));
 
         bool valid = angle >= data[pathIndex].start && angle <= data[pathIndex].end;
-        if (valid) return true;
+        if (valid)
+            return true;
 
         int truePathIndex = -1;
 
-        for(int i = 0; i < data.Count; i ++)
+        for (int i = 0; i < data.Count; i++)
         {
-            if (angle < data[i].start || angle > data[i].end) continue;
+            if (angle < data[i].start || angle > data[i].end)
+                continue;
             truePathIndex = i;
             break;
         }
 
-        if (truePathIndex == -1) return false;
+        if (truePathIndex == -1)
+            return false;
 
         return data[pathIndex].Equals(data[truePathIndex], length);
+    }
+
+    public void FixOrientation()
+    {
+        for (int i = 0; i < edges.Count; i++) { }
     }
 }

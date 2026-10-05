@@ -31,27 +31,27 @@ public class ConvexRoomUi : IUi
 
         ClearBackground(Color.Black);
 
-        // if (!placementMode && graph.nodes.Count > 0)
-        // {
-        //     graph.GenerateData(Steps, Count);
-        //     int validCount = 0;
+        if (!placementMode && graph.nodes.Count > 0)
+        {
+            graph.GenerateData(Steps, Count);
+            int validCount = 0;
 
-        //     for (int i = 0; i < graph.data.Count; i++)
-        //     {
-        //         for (int k = 0; k < Count; k++)
-        //         {
-        //             bool valid = graph.IsValidPath(i, ListenerPos, k);
+            for (int i = 0; i < graph.data.Count; i++)
+            {
+                for (int k = 0; k < Count; k++)
+                {
+                    bool valid = graph.IsValidPath(i, ListenerPos, k);
 
-        //             Vector2 newMic = graph.TransformNodeWithGraph(ListenerPos, graph.data[i], k);
+                    Vector2 newMic = graph.TransformNodeWithGraph(ListenerPos, graph.data[i], k);
 
-        //             if (valid)
-        //             {
-        //                 validCount++;
-        //                 Line(newMic, new(0, 0), Color.Red);
-        //             }
-        //         }
-        //     }
-        // }
+                    if (valid)
+                    {
+                        validCount++;
+                        Line(newMic, new(0, 0), Color.Red);
+                    }
+                }
+            }
+        }
 
         DrawGraph(
             graph,
@@ -63,11 +63,8 @@ public class ConvexRoomUi : IUi
             Vector2 from = graph.nodes[graph.edges[i].from];
             Vector2 to = graph.nodes[graph.edges[i].to];
 
-            float angle1 = (-MathF.Atan2(from.X, from.Y) * 180f / MathF.PI + 90 + 360) % 360;
-            float angle2 = (-MathF.Atan2(to.X, to.Y) * 180f / MathF.PI + 90 + 360) % 360;
-
-            float start = angle1;
-            float end = angle2;
+            float start = GetAngle(from);
+            float end = GetAngle(to);
 
             bool collision =
                 (start <= Theta && end >= Theta && start < end)
@@ -94,26 +91,26 @@ public class ConvexRoomUi : IUi
             );
         }
 
-        // if (selectedPath.Length > 0)
-        // {
-        //     Graph curr = graph;
+        if (selectedPath.Length > 0)
+        {
+            Graph curr = graph;
 
-        //     for (int i = 0; i < selectedPath.Length; i++)
-        //     {
-        //         curr = Graph.MirrorGraphAlongAxis(curr, selectedPath.edges[i]);
-        //         DrawGraph(curr, selectedPath.edges[i]);
+            for (int i = 0; i < selectedPath.Length; i++)
+            {
+                curr = Graph.MirrorGraphAlongAxis(curr, selectedPath.edges[i]);
+                DrawGraph(curr, selectedPath.edges[i]);
 
-        //         Rect(
-        //             RotateVec(
-        //                 graph.TransformNodeWithGraph(ListenerPos, selectedPath, i + 1),
-        //                 Theta,
-        //                 DoRotation
-        //             ),
-        //             new(0.05f, 0.05f),
-        //             Color.Red
-        //         );
-        //     }
-        // }
+                Rect(
+                    RotateVec(
+                        graph.TransformNodeWithGraph(ListenerPos, selectedPath, i + 1),
+                        Theta,
+                        DoRotation
+                    ),
+                    new(0.05f, 0.05f),
+                    Color.Red
+                );
+            }
+        }
 
         if (placementMode && graph.nodes.Count > 0)
             Line(graph.nodes[graph.nodes.Count - 1], mousePos, Color.Yellow);
@@ -127,11 +124,11 @@ public class ConvexRoomUi : IUi
         Rect(ListenerPos, new(0.05f, 0.05f), Color.Red);
         Rect(new(0f, 0f), new(0.05f, 0.05f), Color.Blue);
 
-        // Line(
-        //     RotateVec(new(0, -100), -Theta, !DoRotation),
-        //     RotateVec(new(0, 100), -Theta, !DoRotation),
-        //     Color.Green
-        // );
+        Line(
+            RotateVec(new(0, -100), -Theta, !DoRotation),
+            RotateVec(new(0, 100), -Theta, !DoRotation),
+            Color.Green
+        );
 
         Line(
             RotateVec(new(-100, 0), Theta, !DoRotation),
@@ -198,8 +195,8 @@ public class ConvexRoomUi : IUi
         if (!(SimRef is ConvexSimulation))
             return;
 
-        // if (!placementMode && graph.nodes.Count > 0)
-        //     selectedPath = Graph.GeneratePath(graph, Count, Theta);
+        if (!placementMode && graph.nodes.Count > 0)
+            selectedPath = Graph.GeneratePath(graph, Count, Theta);
 
         Vector2 mousePos = GetMouseWorldPos();
 

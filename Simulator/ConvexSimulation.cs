@@ -16,7 +16,7 @@ public class ConvexSimulation : ISim
         WaveformL = new float[SampleRate * RecordingDuration];
         WaveformR = new float[SampleRate * RecordingDuration];
 
-        Graph graph = (Graph) Room;
+        Graph graph = (Graph)Room;
 
         for (int k = 0; k < Count; k++)
         {
@@ -26,36 +26,37 @@ public class ConvexSimulation : ISim
             {
                 bool valid = graph.IsValidPath(i, ListenerPos, k);
 
-                Vector2 newMic = graph.TransformNodeWithGraph(
-                    ListenerPos,
-                    graph.data[i],
-                    k
-                );
+                Vector2 newMic = graph.TransformNodeWithGraph(ListenerPos, graph.data[i], k);
 
                 if (valid)
                 {
                     float distance = Vector2.Distance(newMic, new(0f, 0f)) * Scale;
                     Vector2 incomingDirection = Vector2.Normalize(newMic - new Vector2(0f, 0f));
 
-                    for (int m = 0; m < k; m ++)
+                    for (int m = 0; m < k; m++)
                     {
                         (int from, int to) currEdge = graph.edges[graph.data[i].edges[m]];
 
                         Vector2 a = graph.nodes[currEdge.from];
                         Vector2 b = graph.nodes[currEdge.to];
 
-                        Vector2 diff = b - a;
-
-                        incomingDirection = MathUtils.DoAxisFlip(incomingDirection, MathF.Atan2(diff.Y, diff.X), 0f, 0f);
+                        incomingDirection = MathUtils.DoAxisFlip(
+                            incomingDirection,
+                            MathUtils.GetAngle(b - a),
+                            0f,
+                            0f
+                        );
                     }
 
                     float l = MathF.Max(0f, -incomingDirection.Y);
                     float r = MathF.Max(0f, incomingDirection.Y);
 
-                    float amplitude = 1 / (0.05f + distance * distance) * MathF.Pow(ReflectionCoefficient, k);
+                    float amplitude =
+                        1 / (0.05f + distance * distance) * MathF.Pow(ReflectionCoefficient, k);
 
-                    int index = (int) (distance * Scale / SpeedOfSound * SampleRate);
-                    if (index >= SampleRate * RecordingDuration) continue;
+                    int index = (int)(distance * Scale / SpeedOfSound * SampleRate);
+                    if (index >= SampleRate * RecordingDuration)
+                        continue;
 
                     WaveformL[index] += amplitude * l;
                     WaveformR[index] += amplitude * r;
