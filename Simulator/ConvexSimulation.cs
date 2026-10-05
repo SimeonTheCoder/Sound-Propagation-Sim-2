@@ -65,6 +65,14 @@ public class ConvexSimulation : ISim
         }
     }
 
+    public void CalculateRecursive()
+    {
+        for (int k = 0; k < Count; k ++)
+        {
+            
+        }
+    }
+
     private int Steps = 720;
     private int Count = 16;
 

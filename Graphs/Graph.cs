@@ -12,39 +12,62 @@ public class Graph
 
     public int GetCollisionEdge(float theta, int lastCollision)
     {
-        int collisionEdge = -1;
-        float lastY = -999;
+        // int collisionEdge = -1;
+        // float lastY = -999;
+
+        // for (int i = 0; i < edges.Count; i++)
+        // {
+        //     Vector2 a = MathUtils.RotateVec(nodes[edges[i].from], theta);
+        //     Vector2 b = MathUtils.RotateVec(nodes[edges[i].to], theta);
+
+        //     if (b.X < a.X)
+        //     {
+        //         Vector2 temp = new(a.X, a.Y);
+
+        //         a.X = b.X;
+        //         a.Y = b.Y;
+
+        //         b.X = temp.X;
+        //         b.Y = temp.Y;
+        //     }
+
+        //     if (i != lastCollision && a.X <= 0 && b.X >= 0)
+        //     {
+        //         float t = (0f - a.X) / (b.X - a.X);
+        //         float y = (1 - t) * a.Y + t * b.Y;
+
+        //         if (y > lastY)
+        //         {
+        //             collisionEdge = i;
+        //             lastY = y;
+        //         }
+        //     }
+        // }
+
+        // return collisionEdge;
+
+        theta = (90f - theta + 360f) % 360f;
 
         for (int i = 0; i < edges.Count; i++)
         {
-            Vector2 a = MathUtils.RotateVec(nodes[edges[i].from], theta);
-            Vector2 b = MathUtils.RotateVec(nodes[edges[i].to], theta);
+            Vector2 from = nodes[edges[i].from];
+            Vector2 to = nodes[edges[i].to];
 
-            if (b.X < a.X)
-            {
-                Vector2 temp = new(a.X, a.Y);
+            //You have to move the origin :'(
+            float start = MathUtils.GetAngle(from);
+            float end = MathUtils.GetAngle(to);
 
-                a.X = b.X;
-                a.Y = b.Y;
+            System.Console.WriteLine($"i: {i}, {start:f1} - {end:f1}");
 
-                b.X = temp.X;
-                b.Y = temp.Y;
-            }
+            bool collision =
+                (start <= theta && end >= theta && start < end)
+                || (end < start && (end >= theta || theta >= start));
 
-            if (i != lastCollision && a.X <= 0 && b.X >= 0)
-            {
-                float t = (0f - a.X) / (b.X - a.X);
-                float y = (1 - t) * a.Y + t * b.Y;
-
-                if (y > lastY)
-                {
-                    collisionEdge = i;
-                    lastY = y;
-                }
-            }
+            if (collision)
+                return i;
         }
 
-        return collisionEdge;
+        return -1;
     }
 
     public static Vector2 MirrorNodeAlongAxis(Graph graph, Vector2 vec, int selectedEdge)

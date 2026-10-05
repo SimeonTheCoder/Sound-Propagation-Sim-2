@@ -4,8 +4,6 @@ using System.Numerics;
 using Graphs;
 using ImGuiNET;
 using Raylib_cs;
-using Simulator;
-using Utils;
 using static Raylib_cs.Raylib;
 using static Shared;
 using static Utils.MathUtils;
@@ -22,6 +20,11 @@ public class ConvexRoomUi : IUi
     int Count = 16;
     int Steps = 720;
 
+    public void CalculateRecursive(float angleStart, float angleEnd)
+    {
+        
+    }
+
     public void Draw()
     {
         if (!(SimRef is ConvexSimulation))
@@ -33,24 +36,24 @@ public class ConvexRoomUi : IUi
 
         if (!placementMode && graph.nodes.Count > 0)
         {
-            graph.GenerateData(Steps, Count);
-            int validCount = 0;
+            // graph.GenerateData(Steps, Count);
+            // int validCount = 0;
 
-            for (int i = 0; i < graph.data.Count; i++)
-            {
-                for (int k = 0; k < Count; k++)
-                {
-                    bool valid = graph.IsValidPath(i, ListenerPos, k);
+            // for (int i = 0; i < graph.data.Count; i++)
+            // {
+            //     for (int k = 0; k < Count; k++)
+            //     {
+            //         bool valid = graph.IsValidPath(i, ListenerPos, k);
 
-                    Vector2 newMic = graph.TransformNodeWithGraph(ListenerPos, graph.data[i], k);
+            //         Vector2 newMic = graph.TransformNodeWithGraph(ListenerPos, graph.data[i], k);
 
-                    if (valid)
-                    {
-                        validCount++;
-                        Line(newMic, new(0, 0), Color.Red);
-                    }
-                }
-            }
+            //         if (valid)
+            //         {
+            //             validCount++;
+            //             Line(newMic, new(0, 0), Color.Red);
+            //         }
+            //     }
+            // }
         }
 
         DrawGraph(
