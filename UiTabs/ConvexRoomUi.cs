@@ -1,6 +1,7 @@
 namespace UiTabs;
 
 using System.Numerics;
+using System.Text;
 using Graphs;
 using ImGuiNET;
 using Raylib_cs;
@@ -22,6 +23,13 @@ public class ConvexRoomUi : IUi
     int Count = 2;
     int Steps = 720;
 
+    private StringBuilder stringBuilder = new();
+
+    private string DepthIndent(int depth)
+    {
+        return new string('\t', depth);
+    }
+
     public void CalculateRecursive(
         Graph graph,
         Vector2 mic,
@@ -32,6 +40,8 @@ public class ConvexRoomUi : IUi
         bool crossSegment
     )
     {
+        stringBuilder.AppendLine($"\n{DepthIndent(depth)}Now exploring depth {depth}!!!");
+
         if (depth > Count)
             return;
 
@@ -52,20 +62,43 @@ public class ConvexRoomUi : IUi
 
         for (int i = 0; i < graph.edges.Count; i++)
         {
-            Vector2 from = graph.nodes[graph.edges[i].from];
-            Vector2 to = graph.nodes[graph.edges[i].to];
+            stringBuilder.AppendLine($"{DepthIndent(depth)}Checking edge {i}");
+
+            int fromIndex = graph.edges[i].from;
+            int toIndex = graph.edges[i].to;
+
+            // if (depth % 2 != 0 && !crossSegment)
+            // {
+            //     int temp = fromIndex;
+            //     fromIndex = toIndex;
+            //     toIndex = temp;
+            // }
+
+            Vector2 from = graph.nodes[fromIndex];
+            Vector2 to = graph.nodes[toIndex];
 
             float start = GetAngle(from - origin);
             float end = GetAngle(to - origin);
 
             if (!crossSegment)
             {
-                if (start < end && ((start < angleStart && end < angleStart) || (start > angleStart && start > angleEnd))) continue;
-                else if (angleStart > end && angleEnd < start) continue;
+                if (
+                    start < end
+                    && (
+                        (start < angleStart && end < angleStart)
+                        || (start > angleStart && start > angleEnd)
+                    )
+                )
+                    continue;
+                else if (angleStart > end && angleEnd < start)
+                    continue;
             }
+
+            stringBuilder.AppendLine($"{DepthIndent(depth)}Reachable!");
 
             if (!crossSegment)
             {
+                stringBuilder.AppendLine($"{DepthIndent(depth)}Current edge is not crooked");
                 if (start < end && MathF.Min(angleEnd, end) > MathF.Max(angleStart, start))
                 {
                     CalculateRecursive(
@@ -77,9 +110,13 @@ public class ConvexRoomUi : IUi
                         depth + 1,
                         false
                     );
+
+                    stringBuilder.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
                 }
                 else
                 {
+                    stringBuilder.AppendLine($"{DepthIndent(depth)}But reflection is!");
+
                     if (start < angleEnd)
                     {
                         CalculateRecursive(
@@ -91,6 +128,7 @@ public class ConvexRoomUi : IUi
                             depth + 1,
                             false
                         );
+                        stringBuilder.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
                     }
 
                     if (angleStart < end)
@@ -104,12 +142,15 @@ public class ConvexRoomUi : IUi
                             depth + 1,
                             false
                         );
+                        stringBuilder.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
                     }
                 }
             }
             else
             {
-                if(start < end)
+                stringBuilder.AppendLine($"{DepthIndent(depth)}Oy, crooked m8");
+
+                if (start < end)
                 {
                     if (start < angleEnd)
                     {
@@ -122,6 +163,7 @@ public class ConvexRoomUi : IUi
                             depth + 1,
                             true
                         );
+                        stringBuilder.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
                     }
 
                     if (angleStart < end)
@@ -135,10 +177,13 @@ public class ConvexRoomUi : IUi
                             depth + 1,
                             true
                         );
+                        stringBuilder.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
                     }
                 }
                 else
                 {
+                    stringBuilder.AppendLine($"{DepthIndent(depth)}Double crooked!");
+
                     CalculateRecursive(
                         Graph.MirrorGraphAlongAxis(graph, i),
                         Graph.MirrorNodeAlongAxis(graph, mic, i),
@@ -148,6 +193,7 @@ public class ConvexRoomUi : IUi
                         depth + 1,
                         true
                     );
+                    stringBuilder.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
                 }
             }
         }
@@ -166,7 +212,10 @@ public class ConvexRoomUi : IUi
         {
             if (recursiveMode)
             {
+                Console.WriteLine("\n\n\n\n\n\n\n\n\nSTART!!!");
+                stringBuilder.Clear();
                 CalculateRecursive(graph, ListenerPos, new(0f, 0f), 0f, 360f, 0, false);
+                File.WriteAllText("output.log", stringBuilder.ToString());
             }
             else
             {

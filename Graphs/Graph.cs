@@ -86,8 +86,11 @@ public class Graph
         return MathUtils.DoAxisFlip(vec, theta, xo, yo);
     }
 
-    public static Graph MirrorGraphAlongAxis(Graph graph, int selectedEdge)
+    public static Graph MirrorGraphAlongAxis(Graph graph, int selectedEdge, bool debug = true)
     {
+        if (debug)
+            System.Console.WriteLine($"Flipping around {selectedEdge}");
+
         if (selectedEdge == -1)
             return graph;
 
@@ -103,7 +106,7 @@ public class Graph
         {
             nodes = graph.nodes.Select(n => MathUtils.DoAxisFlip(n, theta, xo, yo)).ToList(),
             edges = graph.edges.Select(p => p).ToList(),
-        }.FixOrientation();
+        }.FixOrientation(debug);
     }
 
     public static GraphPath GeneratePath(Graph graph, int count, float theta)
@@ -113,7 +116,7 @@ public class Graph
 
         for (int i = 0; i < count - 1; i++)
         {
-            currGraph = MirrorGraphAlongAxis(currGraph, edges[i]);
+            currGraph = MirrorGraphAlongAxis(currGraph, edges[i], false);
             edges.Add(currGraph.GetCollisionEdge(theta, edges.Count > 0 ? edges[i] : -1));
 
             if (edges[edges.Count - 1] == -1)
@@ -184,7 +187,7 @@ public class Graph
 
         for (int i = 0; i < count; i++)
         {
-            graphCopy = MirrorGraphAlongAxis(graphCopy, path.edges[i]);
+            graphCopy = MirrorGraphAlongAxis(graphCopy, path.edges[i], false);
             copy = MirrorNodeAlongAxis(graphCopy, copy, path.edges[i]);
         }
 
@@ -216,7 +219,7 @@ public class Graph
         return data[pathIndex].Equals(data[truePathIndex], length);
     }
 
-    public Graph FixOrientation()
+    public Graph FixOrientation(bool debug)
     {
         int totalPositive = 0;
 
@@ -225,25 +228,31 @@ public class Graph
             float start = MathUtils.GetAngle(nodes[edges[i].from]);
             float end = MathUtils.GetAngle(nodes[edges[i].to]);
 
-            // System.Console.WriteLine(start < end);
-
             totalPositive += (start < end) ? 1 : 0;
         }
 
         if (totalPositive <= 1)
         {
-            // System.Console.WriteLine("FIXED ORIENTATION!!!");
-            // System.Console.WriteLine(totalPositive);
-
-            for (int i = 0; i < edges.Count; i ++)
-            {
-                int from = edges[i].from;
-                int to = edges[i].to;
-
-                edges[i] = (to, from);
-            }
+            if (debug)
+                Console.WriteLine("FLIP NEEDED!");
+            return Flip();
         }
-        
+        else
+        {
+            return this;
+        }
+    }
+
+    public Graph Flip()
+    {
+        for (int i = 0; i < edges.Count; i++)
+        {
+            int from = edges[i].from;
+            int to = edges[i].to;
+
+            edges[i] = (to, from);
+        }
+
         return this;
     }
 }
