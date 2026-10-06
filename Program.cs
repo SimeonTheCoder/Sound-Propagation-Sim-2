@@ -17,7 +17,8 @@ public class Program
         SimRef = simulations[0];
 
         IUi[] tabs = [new SingleParticleUi(), new ConvexRoomUi(), new RecordUi()];
-        foreach (var tab in tabs) tab.Init();
+        foreach (var tab in tabs)
+            tab.Init();
 
         Zoom = 1000f;
         Pan = new(0f, 0f);
@@ -37,9 +38,10 @@ public class Program
 
         bool firstOpen = true;
 
-        while(!Raylib.WindowShouldClose())
+        while (!Raylib.WindowShouldClose())
         {
-            foreach (var tab in tabs) tab.Update();
+            foreach (var tab in tabs)
+                tab.Update();
 
             Zoom *= Raylib.GetMouseWheelMoveV().Y * 0.1f + 1;
 
@@ -49,12 +51,12 @@ public class Program
             {
                 if (!mouseDragging)
                 {
-                    mouseDragStart = RenderingUtils.ClipToXY(((int) mousePos.X, (int) mousePos.Y));
+                    mouseDragStart = RenderingUtils.ClipToXY(((int)mousePos.X, (int)mousePos.Y));
                     mouseDragging = true;
                 }
                 else
                 {
-                    Vector2 curr = RenderingUtils.ClipToXY(((int) mousePos.X, (int) mousePos.Y));
+                    Vector2 curr = RenderingUtils.ClipToXY(((int)mousePos.X, (int)mousePos.Y));
                     Vector2 offset = curr - mouseDragStart;
 
                     Pan += offset;
@@ -67,9 +69,10 @@ public class Program
 
             Raylib.BeginDrawing();
 
-            for (int i = 0; i < tabs.Length; i ++)
+            for (int i = 0; i < tabs.Length; i++)
             {
-                if (i != selectedTab) continue;
+                if (i != selectedTab)
+                    continue;
                 tabs[i].Draw();
             }
 
@@ -77,8 +80,12 @@ public class Program
 
             if (firstOpen)
             {
-                ImGui.SetNextWindowPos(new(Raylib.GetScreenWidth() * 22 / 30, Raylib.GetScreenHeight() / 20));
-                ImGui.SetNextWindowSize(new(Raylib.GetScreenWidth() / 4, Raylib.GetScreenHeight() / 12));
+                ImGui.SetNextWindowPos(
+                    new(Raylib.GetScreenWidth() * 22 / 30, Raylib.GetScreenHeight() / 20)
+                );
+                ImGui.SetNextWindowSize(
+                    new(Raylib.GetScreenWidth() / 4, Raylib.GetScreenHeight() / 12)
+                );
             }
 
             ImGui.Begin("Controls");
@@ -90,8 +97,12 @@ public class Program
 
             if (firstOpen)
             {
-                ImGui.SetNextWindowPos(new(Raylib.GetScreenWidth() * 22 / 30, Raylib.GetScreenHeight() / 6.7f));
-                ImGui.SetNextWindowSize(new(Raylib.GetScreenWidth() / 4, Raylib.GetScreenHeight() / 12));
+                ImGui.SetNextWindowPos(
+                    new(Raylib.GetScreenWidth() * 22 / 30, Raylib.GetScreenHeight() / 6.7f)
+                );
+                ImGui.SetNextWindowSize(
+                    new(Raylib.GetScreenWidth() / 4, Raylib.GetScreenHeight() / 12)
+                );
             }
 
             ImGui.Begin("Simulation Options");
@@ -113,21 +124,27 @@ public class Program
 
             if (firstOpen)
             {
-                ImGui.SetNextWindowPos(new(Raylib.GetScreenWidth() * 22 / 30, Raylib.GetScreenHeight() * 2 / 8));
-                ImGui.SetNextWindowSize(new(Raylib.GetScreenWidth() / 4, Raylib.GetScreenHeight() / 2));
+                ImGui.SetNextWindowPos(
+                    new(Raylib.GetScreenWidth() * 22 / 30, Raylib.GetScreenHeight() * 2 / 8)
+                );
+                ImGui.SetNextWindowSize(
+                    new(Raylib.GetScreenWidth() / 4, Raylib.GetScreenHeight() / 2)
+                );
             }
 
             ImGui.Begin("Visualisation");
 
             ImGui.BeginTabBar("tab_bar");
 
-            for (int i = 0; i < tabs.Length; i ++)
+            for (int i = 0; i < tabs.Length; i++)
             {
                 bool result = tabs[i].DrawUi();
-                
-                if (!result) continue;
 
-                if (selectedTab != i) tabs[i].Init();
+                if (!result)
+                    continue;
+
+                if (selectedTab != i)
+                    tabs[i].Init();
                 selectedTab = i;
             }
 
@@ -136,6 +153,9 @@ public class Program
             ImGui.End();
 
             rlImGui.End();
+
+            Raylib.DrawFPS(10, 10);
+
             Raylib.EndDrawing();
 
             firstOpen = false;

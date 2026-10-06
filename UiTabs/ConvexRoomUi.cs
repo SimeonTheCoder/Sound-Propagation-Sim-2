@@ -23,13 +23,6 @@ public class ConvexRoomUi : IUi
     int Count = 2;
     int Steps = 720;
 
-    public static StringBuilder log = new();
-
-    private string DepthIndent(int depth)
-    {
-        return new string('\t', depth);
-    }
-
     public void CalculateRecursive(
         Graph graph,
         Vector2 mic,
@@ -39,9 +32,6 @@ public class ConvexRoomUi : IUi
         int lastEdge
     )
     {
-        log.AppendLine($"\n{DepthIndent(depth)}Now exploring depth {depth}!!!");
-        log.AppendLine($"{DepthIndent(depth)}{angleStart:f0} to {angleEnd:f0}");
-
         if (depth > Count)
             return;
 
@@ -50,29 +40,22 @@ public class ConvexRoomUi : IUi
         if (angleToMic >= angleStart && angleToMic <= angleEnd)
         {
             Line(new(0f, 0f), mic, Color.Red);
-            log.AppendLine(
-                $"{DepthIndent(depth)} Mic found! {angleStart:f0} < {angleToMic} < {angleEnd:f0}"
-            );
         }
 
         for (int i = 0; i < graph.edges.Count; i++)
         {
-            // if (depth == 0 && i != 0)
-            //     continue;
             if (i == lastEdge)
                 continue;
 
             int fromIndex = graph.edges[i].from;
             int toIndex = graph.edges[i].to;
 
-            log.AppendLine($"{DepthIndent(depth)}Checking edge {i} ({fromIndex}-->{toIndex})");
-
-            // if (depth % 2 != 0 && !crossSegment)
-            // {
-            //     int temp = fromIndex;
-            //     fromIndex = toIndex;
-            //     toIndex = temp;
-            // }
+            if (depth % 2 != 0)
+            {
+                int temp = fromIndex;
+                fromIndex = toIndex;
+                toIndex = temp;
+            }
 
             Vector2 from = graph.nodes[fromIndex];
             Vector2 to = graph.nodes[toIndex];
@@ -80,16 +63,11 @@ public class ConvexRoomUi : IUi
             float start = GetAngle(from);
             float end = GetAngle(to);
 
-            log.AppendLine($"{DepthIndent(depth)}{start:f0} to {end:f0}");
-
             if (start < end && MathF.Max(start, angleStart) > MathF.Min(end, angleEnd))
                 continue;
             else if (angleStart > end && angleEnd < start)
                 continue;
 
-            log.AppendLine($"{DepthIndent(depth)}Reachable!");
-
-            log.AppendLine($"{DepthIndent(depth)}Current edge is not crooked");
             if (start < end && MathF.Min(angleEnd, end) > MathF.Max(angleStart, start))
             {
                 CalculateRecursive(
@@ -100,13 +78,9 @@ public class ConvexRoomUi : IUi
                     depth + 1,
                     i
                 );
-
-                log.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
             }
             else
             {
-                log.AppendLine($"{DepthIndent(depth)}But reflection is!");
-
                 if (start < angleEnd)
                 {
                     CalculateRecursive(
@@ -117,7 +91,6 @@ public class ConvexRoomUi : IUi
                         depth + 1,
                         i
                     );
-                    log.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
                 }
 
                 if (angleStart < end)
@@ -130,7 +103,6 @@ public class ConvexRoomUi : IUi
                         depth + 1,
                         i
                     );
-                    log.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
                 }
             }
         }
@@ -149,10 +121,7 @@ public class ConvexRoomUi : IUi
         {
             if (recursiveMode)
             {
-                Console.WriteLine("\n\n\n\n\n\n\n\n\nSTART!!!");
-                log.Clear();
                 CalculateRecursive(graph, ListenerPos, 0f, 360f, 0, -1);
-                File.WriteAllText("output.log", log.ToString());
             }
             else
             {
@@ -185,39 +154,6 @@ public class ConvexRoomUi : IUi
             graph,
             selectedPath.Length > 0 ? selectedPath.edges[selectedPath.Length - 1] : -1
         );
-
-        // for (int i = 0; i < graph.edges.Count; i++)
-        // {
-        //     Vector2 from = graph.nodes[graph.edges[i].from];
-        //     Vector2 to = graph.nodes[graph.edges[i].to];
-
-        //     float start = GetAngle(from);
-        //     float end = GetAngle(to);
-
-        //     bool collision =
-        //         (start <= Theta && end >= Theta && start < end)
-        //         || (end < start && (end >= Theta || Theta >= start));
-
-        //     (int x, int y) coords = TransformCoords(from * 0.5f + to * 0.5f);
-        //     DrawText(
-        //         $"{start:f1} to {end:f1}",
-        //         coords.x,
-        //         coords.y + 20,
-        //         20,
-        //         collision ? Color.Red : Color.Yellow
-        //     );
-
-        //     Line(
-        //         new(0f, 0f),
-        //         RotateVec(from, Theta, DoRotation),
-        //         collision ? Color.Red : Color.Yellow
-        //     );
-        //     Line(
-        //         new(0f, 0f),
-        //         RotateVec(to, Theta, DoRotation),
-        //         collision ? Color.Red : Color.Yellow
-        //     );
-        // }
 
         if (selectedPath.Length > 0)
         {

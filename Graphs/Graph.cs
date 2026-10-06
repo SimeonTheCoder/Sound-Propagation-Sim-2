@@ -87,11 +87,8 @@ public class Graph
         return MathUtils.DoAxisFlip(vec, theta, xo, yo);
     }
 
-    public static Graph MirrorGraphAlongAxis(Graph graph, int selectedEdge, bool debug = true)
+    public static Graph MirrorGraphAlongAxis(Graph graph, int selectedEdge)
     {
-        if (debug)
-            ConvexRoomUi.log.AppendLine($"== Flipping around {selectedEdge}");
-
         if (selectedEdge == -1)
             return graph;
 
@@ -107,7 +104,7 @@ public class Graph
         {
             nodes = graph.nodes.Select(n => MathUtils.DoAxisFlip(n, theta, xo, yo)).ToList(),
             edges = graph.edges.Select(p => p).ToList(),
-        }.FixOrientation(debug);
+        };
     }
 
     public static GraphPath GeneratePath(Graph graph, int count, float theta)
@@ -117,7 +114,7 @@ public class Graph
 
         for (int i = 0; i < count - 1; i++)
         {
-            currGraph = MirrorGraphAlongAxis(currGraph, edges[i], false);
+            currGraph = MirrorGraphAlongAxis(currGraph, edges[i]);
             edges.Add(currGraph.GetCollisionEdge(theta, edges.Count > 0 ? edges[i] : -1));
 
             if (edges[edges.Count - 1] == -1)
@@ -188,7 +185,7 @@ public class Graph
 
         for (int i = 0; i < count; i++)
         {
-            graphCopy = MirrorGraphAlongAxis(graphCopy, path.edges[i], false);
+            graphCopy = MirrorGraphAlongAxis(graphCopy, path.edges[i]);
             copy = MirrorNodeAlongAxis(graphCopy, copy, path.edges[i]);
         }
 
@@ -218,43 +215,5 @@ public class Graph
             return false;
 
         return data[pathIndex].Equals(data[truePathIndex], length);
-    }
-
-    public Graph FixOrientation(bool debug)
-    {
-        int totalPositive = 0;
-
-        for (int i = 0; i < edges.Count; i++)
-        {
-            float start = MathUtils.GetAngle(nodes[edges[i].from]);
-            float end = MathUtils.GetAngle(nodes[edges[i].to]);
-
-            totalPositive += (start < end) ? 1 : 0;
-        }
-
-        // if (totalPositive <= 1)
-        // {
-        //     if (debug)
-        //         ConvexRoomUi.log.AppendLine("FLIP NEEDED!");
-        //     return Flip();
-        // }
-        // else
-        // {
-        //     return this;
-        // }
-        return Flip();
-    }
-
-    public Graph Flip()
-    {
-        for (int i = 0; i < edges.Count; i++)
-        {
-            int from = edges[i].from;
-            int to = edges[i].to;
-
-            edges[i] = (to, from);
-        }
-
-        return this;
     }
 }

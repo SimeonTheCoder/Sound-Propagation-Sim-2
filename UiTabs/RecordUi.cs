@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using ImGuiNET;
 using Raylib_cs;
 using Simulator;
@@ -56,7 +57,7 @@ public class RecordUi : IUi
         {
             for (int i = -100; i < 0; i += 10)
             {
-                int h = (int) ((i - dbMin + 0f) / (dbMax - dbMin) * Height);
+                int h = (int)((i - dbMin + 0f) / (dbMax - dbMin) * Height);
 
                 Raylib.DrawLine(0, Height - h, Width, Height - h, Color.Gray);
                 Raylib.DrawText($"{i} dB", Width - 100, Height - h, 20, Color.Yellow);
@@ -65,22 +66,36 @@ public class RecordUi : IUi
 
         Raylib.BeginBlendMode(BlendMode.Additive);
 
-        for (int i = 0; i < SimRef.WaveformL.Length; i ++)
+        for (int i = 0; i < SimRef.WaveformL.Length; i++)
         {
-            int hl = (int) (SimRef.WaveformL[i] * Height);
-            int hr = (int) (SimRef.WaveformR[i] * Height);
+            int hl = (int)(SimRef.WaveformL[i] * Height);
+            int hr = (int)(SimRef.WaveformR[i] * Height);
 
             if (useDb)
             {
                 float dbL = 20 * MathF.Log10(SimRef.WaveformL[i]);
-                hl = (int) ((dbL - dbMin) / (dbMax - dbMin) * Height);
+                hl = (int)((dbL - dbMin) / (dbMax - dbMin) * Height);
 
                 float dbR = 20 * MathF.Log10(SimRef.WaveformR[i]);
-                hr = (int) ((dbR - dbMin) / (dbMax - dbMin) * Height);
+                hr = (int)((dbR - dbMin) / (dbMax - dbMin) * Height);
             }
-            
-            Raylib.DrawRectangle((int) ((i + 0f) / SampleRate / RecordingDuration * Width * Zoom) + (int) (Pan.X * Zoom), Height - hl, (int) Zoom, hl, new Color(1f, 0f, 0f));
-            Raylib.DrawRectangle((int) ((i + 0f) / SampleRate / RecordingDuration * Width * Zoom) + (int) (Pan.X * Zoom), Height - hr, (int) Zoom, hr, new Color(0f, 1f, 0f));
+
+            Raylib.DrawRectangle(
+                (int)((i + 0f) / SampleRate / RecordingDuration * Width * Zoom)
+                    + (int)(Pan.X * Zoom),
+                Height - hl,
+                (int)Zoom,
+                hl,
+                new Color(1f, 0f, 0f)
+            );
+            Raylib.DrawRectangle(
+                (int)((i + 0f) / SampleRate / RecordingDuration * Width * Zoom)
+                    + (int)(Pan.X * Zoom),
+                Height - hr,
+                (int)Zoom,
+                hr,
+                new Color(0f, 1f, 0f)
+            );
         }
 
         Raylib.EndBlendMode();
@@ -88,8 +103,9 @@ public class RecordUi : IUi
 
     public bool DrawUi()
     {
-        if (!ImGui.BeginTabItem("IR Simulation")) return false;
-        
+        if (!ImGui.BeginTabItem("IR Simulation"))
+            return false;
+
         ImGui.SliderFloat("Scale", ref Scale, 0f, 100f, "%f", ImGuiSliderFlags.Logarithmic);
         ImGui.SliderFloat("Reflection Coefficient", ref ReflectionCoefficient, 0f, 1f, "%f");
 
@@ -132,14 +148,21 @@ public class RecordUi : IUi
             ir = Raylib.LoadMusicStream("output.wav");
             songDry = Raylib.LoadMusicStream("song.mp3");
 
-            Process process = new()
-            {
-                StartInfo =
+            ProcessStartInfo startInfo = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? new()
                 {
                     FileName = "cmd.exe",
-                    Arguments = "/C ffmpeg -y -i song.mp3 -i output.wav -filter_complex \"[1]loudnorm[a];[0][a]afir\" processed.wav"
+                    Arguments =
+                        "/C ffmpeg -y -i song.mp3 -i output.wav -filter_complex \"[1]loudnorm[a];[0][a]afir\" processed.wav",
                 }
-            };
+                : new()
+                {
+                    FileName = "bash",
+                    Arguments =
+                        "-c \"ffmpeg -y -i song.mp3 -i output.wav -filter_complex \'[1]loudnorm[a];[0][a]afir\' processed.wav\"",
+                };
+
+            Process process = new() { StartInfo = startInfo };
 
             process.Start();
             process.WaitForExit();
@@ -198,7 +221,7 @@ public class RecordUi : IUi
         }
 
         ImGui.SliderFloat("Volume Dry", ref volumeDry, 0f, 1f);
-        ImGui.SliderFloat("Volume Wet", ref volumeWet, 0f, 1f);
+        ImGui.SliderFloat("Volume Wet", ref volumeWet, 0f, 10f);
 
         ImGui.EndTabItem();
         return true;
