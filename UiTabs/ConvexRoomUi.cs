@@ -23,7 +23,7 @@ public class ConvexRoomUi : IUi
     int Count = 2;
     int Steps = 720;
 
-    private StringBuilder stringBuilder = new();
+    public static StringBuilder log = new();
 
     private string DepthIndent(int depth)
     {
@@ -33,39 +33,39 @@ public class ConvexRoomUi : IUi
     public void CalculateRecursive(
         Graph graph,
         Vector2 mic,
-        Vector2 origin,
         float angleStart,
         float angleEnd,
         int depth,
-        bool crossSegment
+        int lastEdge
     )
     {
-        stringBuilder.AppendLine($"\n{DepthIndent(depth)}Now exploring depth {depth}!!!");
+        log.AppendLine($"\n{DepthIndent(depth)}Now exploring depth {depth}!!!");
+        log.AppendLine($"{DepthIndent(depth)}{angleStart:f0} to {angleEnd:f0}");
 
         if (depth > Count)
             return;
 
         float angleToMic = GetAngle(mic);
 
-        if (!crossSegment)
+        if (angleToMic >= angleStart && angleToMic <= angleEnd)
         {
-            if (angleToMic >= angleStart && angleToMic <= angleEnd)
-            {
-                Line(new(0f, 0f), mic, Color.Red);
-            }
-        }
-        else
-        {
-            if (angleToMic >= angleStart || angleToMic <= angleEnd)
-                Line(new(0f, 0f), mic, Color.Red);
+            Line(new(0f, 0f), mic, Color.Red);
+            log.AppendLine(
+                $"{DepthIndent(depth)} Mic found! {angleStart:f0} < {angleToMic} < {angleEnd:f0}"
+            );
         }
 
         for (int i = 0; i < graph.edges.Count; i++)
         {
-            stringBuilder.AppendLine($"{DepthIndent(depth)}Checking edge {i}");
+            // if (depth == 0 && i != 0)
+            //     continue;
+            if (i == lastEdge)
+                continue;
 
             int fromIndex = graph.edges[i].from;
             int toIndex = graph.edges[i].to;
+
+            log.AppendLine($"{DepthIndent(depth)}Checking edge {i} ({fromIndex}-->{toIndex})");
 
             // if (depth % 2 != 0 && !crossSegment)
             // {
@@ -77,123 +77,60 @@ public class ConvexRoomUi : IUi
             Vector2 from = graph.nodes[fromIndex];
             Vector2 to = graph.nodes[toIndex];
 
-            float start = GetAngle(from - origin);
-            float end = GetAngle(to - origin);
+            float start = GetAngle(from);
+            float end = GetAngle(to);
 
-            if (!crossSegment)
+            log.AppendLine($"{DepthIndent(depth)}{start:f0} to {end:f0}");
+
+            if (start < end && MathF.Max(start, angleStart) > MathF.Min(end, angleEnd))
+                continue;
+            else if (angleStart > end && angleEnd < start)
+                continue;
+
+            log.AppendLine($"{DepthIndent(depth)}Reachable!");
+
+            log.AppendLine($"{DepthIndent(depth)}Current edge is not crooked");
+            if (start < end && MathF.Min(angleEnd, end) > MathF.Max(angleStart, start))
             {
-                if (
-                    start < end
-                    && (
-                        (start < angleStart && end < angleStart)
-                        || (start > angleStart && start > angleEnd)
-                    )
-                )
-                    continue;
-                else if (angleStart > end && angleEnd < start)
-                    continue;
-            }
+                CalculateRecursive(
+                    Graph.MirrorGraphAlongAxis(graph, i),
+                    Graph.MirrorNodeAlongAxis(graph, mic, i),
+                    MathF.Max(angleStart, start),
+                    MathF.Min(angleEnd, end),
+                    depth + 1,
+                    i
+                );
 
-            stringBuilder.AppendLine($"{DepthIndent(depth)}Reachable!");
-
-            if (!crossSegment)
-            {
-                stringBuilder.AppendLine($"{DepthIndent(depth)}Current edge is not crooked");
-                if (start < end && MathF.Min(angleEnd, end) > MathF.Max(angleStart, start))
-                {
-                    CalculateRecursive(
-                        Graph.MirrorGraphAlongAxis(graph, i),
-                        Graph.MirrorNodeAlongAxis(graph, mic, i),
-                        Graph.MirrorNodeAlongAxis(graph, origin, i),
-                        MathF.Max(angleStart, start),
-                        MathF.Min(angleEnd, end),
-                        depth + 1,
-                        false
-                    );
-
-                    stringBuilder.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
-                }
-                else
-                {
-                    stringBuilder.AppendLine($"{DepthIndent(depth)}But reflection is!");
-
-                    if (start < angleEnd)
-                    {
-                        CalculateRecursive(
-                            Graph.MirrorGraphAlongAxis(graph, i),
-                            Graph.MirrorNodeAlongAxis(graph, mic, i),
-                            Graph.MirrorNodeAlongAxis(graph, origin, i),
-                            start,
-                            angleEnd,
-                            depth + 1,
-                            false
-                        );
-                        stringBuilder.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
-                    }
-
-                    if (angleStart < end)
-                    {
-                        CalculateRecursive(
-                            Graph.MirrorGraphAlongAxis(graph, i),
-                            Graph.MirrorNodeAlongAxis(graph, mic, i),
-                            Graph.MirrorNodeAlongAxis(graph, origin, i),
-                            angleStart,
-                            end,
-                            depth + 1,
-                            false
-                        );
-                        stringBuilder.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
-                    }
-                }
+                log.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
             }
             else
             {
-                stringBuilder.AppendLine($"{DepthIndent(depth)}Oy, crooked m8");
+                log.AppendLine($"{DepthIndent(depth)}But reflection is!");
 
-                if (start < end)
+                if (start < angleEnd)
                 {
-                    if (start < angleEnd)
-                    {
-                        CalculateRecursive(
-                            Graph.MirrorGraphAlongAxis(graph, i),
-                            Graph.MirrorNodeAlongAxis(graph, mic, i),
-                            Graph.MirrorNodeAlongAxis(graph, origin, i),
-                            start,
-                            angleEnd,
-                            depth + 1,
-                            true
-                        );
-                        stringBuilder.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
-                    }
-
-                    if (angleStart < end)
-                    {
-                        CalculateRecursive(
-                            Graph.MirrorGraphAlongAxis(graph, i),
-                            Graph.MirrorNodeAlongAxis(graph, mic, i),
-                            Graph.MirrorNodeAlongAxis(graph, origin, i),
-                            angleStart,
-                            end,
-                            depth + 1,
-                            true
-                        );
-                        stringBuilder.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
-                    }
-                }
-                else
-                {
-                    stringBuilder.AppendLine($"{DepthIndent(depth)}Double crooked!");
-
                     CalculateRecursive(
                         Graph.MirrorGraphAlongAxis(graph, i),
                         Graph.MirrorNodeAlongAxis(graph, mic, i),
-                        Graph.MirrorNodeAlongAxis(graph, origin, i),
-                        MathF.Max(start, angleStart),
-                        MathF.Min(end, angleEnd),
+                        start,
+                        angleEnd,
                         depth + 1,
-                        true
+                        i
                     );
-                    stringBuilder.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
+                    log.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
+                }
+
+                if (angleStart < end)
+                {
+                    CalculateRecursive(
+                        Graph.MirrorGraphAlongAxis(graph, i),
+                        Graph.MirrorNodeAlongAxis(graph, mic, i),
+                        angleStart,
+                        end,
+                        depth + 1,
+                        i
+                    );
+                    log.AppendLine($"\n{DepthIndent(depth)}Back to depth {depth}");
                 }
             }
         }
@@ -213,9 +150,9 @@ public class ConvexRoomUi : IUi
             if (recursiveMode)
             {
                 Console.WriteLine("\n\n\n\n\n\n\n\n\nSTART!!!");
-                stringBuilder.Clear();
-                CalculateRecursive(graph, ListenerPos, new(0f, 0f), 0f, 360f, 0, false);
-                File.WriteAllText("output.log", stringBuilder.ToString());
+                log.Clear();
+                CalculateRecursive(graph, ListenerPos, 0f, 360f, 0, -1);
+                File.WriteAllText("output.log", log.ToString());
             }
             else
             {

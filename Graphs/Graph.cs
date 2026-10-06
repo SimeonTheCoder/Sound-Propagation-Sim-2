@@ -1,4 +1,5 @@
 using System.Numerics;
+using UiTabs;
 using Utils;
 
 namespace Graphs;
@@ -89,7 +90,7 @@ public class Graph
     public static Graph MirrorGraphAlongAxis(Graph graph, int selectedEdge, bool debug = true)
     {
         if (debug)
-            System.Console.WriteLine($"Flipping around {selectedEdge}");
+            ConvexRoomUi.log.AppendLine($"== Flipping around {selectedEdge}");
 
         if (selectedEdge == -1)
             return graph;
@@ -231,16 +232,17 @@ public class Graph
             totalPositive += (start < end) ? 1 : 0;
         }
 
-        if (totalPositive <= 1)
-        {
-            if (debug)
-                Console.WriteLine("FLIP NEEDED!");
-            return Flip();
-        }
-        else
-        {
-            return this;
-        }
+        // if (totalPositive <= 1)
+        // {
+        //     if (debug)
+        //         ConvexRoomUi.log.AppendLine("FLIP NEEDED!");
+        //     return Flip();
+        // }
+        // else
+        // {
+        //     return this;
+        // }
+        return Flip();
     }
 
     public Graph Flip()
